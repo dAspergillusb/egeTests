@@ -1,0 +1,1 @@
+from .endpoints.main_pages import register_main_endpoints
