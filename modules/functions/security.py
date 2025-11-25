@@ -6,4 +6,6 @@ FAKE_KEYS: set[str] = {"security", "secret"}
 
 
 def get_api_key(key: str = Depends(API_KEY)) -> str:
-    if key not in FAKE_KEYS:
+    if key in FAKE_KEYS:
+        return "False"
+    return key

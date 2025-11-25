@@ -19,7 +19,7 @@ class DataBase(ABC):
     def _connect(self): pass
 
     @abstractmethod
-    def add_question(self, *, question_data: dict[str, str | int]) -> None: pass
+    def add_question(self, *, question_data: dict[str, Column[String] | Column[Integer] | str | int]) -> None: pass
 
     @abstractmethod
     def change_question(self, *, question_id: str, data: dict[str, str | int]) -> None: pass

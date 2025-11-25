@@ -1,0 +1,35 @@
+<div class="sticky-top mb-2">
+  <nav class="navbar navbar-expand-md bg-dark border-bottom border-bottom-dark mb-3 sticky-top" data-bs-theme="dark">
+    <div class="container-fluid">
+      <img class="" src="/static/svg/icon_white.svg" alt="" width="auto" height="72">
+      {% if variant %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navigation" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Переключатель навигации">
+        <span class="navbar-toggler-icon"></span>Вопросы
+      </button>
+      {% endif %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Переключатель навигации">
+        <span class="navbar-toggler-icon"></span>Меню
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown p-4">
+            <a class="nav-link dropdown-toggle btn btn-primary" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color:white">
+              {{firstname}} {{lastname}}
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <li><a class="dropdown-item" href="{{ url_for('delete_user_submit') }}" type="button">Удалить меня</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('logout') }}" type="button">Выход</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      {% if test_time %}
+        <ul class="navbar-nav">
+          <li>
+            <a class="btn btn-outline-primary" onload="countdownTimer({{ test_time }})" id="clock"><b id="countdown">{{ test_time // 60 }} : {{ test_time % 60 }}</b></a>
+          </li>
+        </ul>
+      {% endif %}
+    </div>
+  </nav>
+</div>
