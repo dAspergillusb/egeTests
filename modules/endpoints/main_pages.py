@@ -1,5 +1,6 @@
 from typing import Annotated, Type
 from fastapi import APIRouter, FastAPI, Request, Form
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Integer, Column
@@ -17,8 +18,7 @@ def register_main_endpoints(app: FastAPI) -> None:
 
     @app.get(path="/")
     def main_page(request: Request) -> _TemplateResponse:
-        print(dict(request))
-        request.get("")
+
         return TEMPLATES.TemplateResponse(
             name="sign_in.html",
             context={
@@ -27,35 +27,17 @@ def register_main_endpoints(app: FastAPI) -> None:
             }
         )
 
-    @app.post(path="/")
+    @app.post(path="/", response_model=None)
     def main_page_login(
             request: Request,
             name: Annotated[str, Form()],
             school_class: Annotated[str, Form()]
-    ) -> _TemplateResponse:
-        try:
-            firstname, lastname = name.split()
-        except ValueError:
-            return TEMPLATES.TemplateResponse(
-                name="sign_in.html",
-                context={
-                    "request": request,
-                    "check_name_class": True
-                }
-            )
-        print(name, school_class)
+    ) -> _TemplateResponse | RedirectResponse:
         if name in ACCEPTED_NAMES and school_class in ACCEPTED_CLASSES:
             request.session["name"] = name
             request.session["school_class"] = school_class
-            informatics: dict[Column[Integer], Type[InformaticsDB]] = get_test_var()
-            print(informatics)
-            return TEMPLATES.TemplateResponse(
-                name="/test_pages/generated_test.html",
-                context={
-                    "request": request,
-                    "test_var": informatics
-                }
-            )
+
+            return RedirectResponse("/test", status_code=302)
 
         return TEMPLATES.TemplateResponse(
             name="sign_in.html",
@@ -64,4 +46,13 @@ def register_main_endpoints(app: FastAPI) -> None:
                 "check_name_class": True
             }
         )
+
+    @ROUTER.get("/files/download/{filename}", response_model=)
+    def get_file(path: str, filename: str) -> FileResponse:
+        return FileResponse(path=path, filename=filename)
+
+    @app.get("/logout")
+    def logout(request: Request) -> RedirectResponse:
+        request.session.clear()
+        return RedirectResponse("/")
 

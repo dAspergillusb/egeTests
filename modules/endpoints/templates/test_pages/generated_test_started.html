@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
   <head>
-    <link rel="stylesheet" href="/static/css/ckeditor5.css"/>
+    <link rel="stylesheet" href="/static/css/ckeditor5-content.css"/>
     <script src="/static/js/jquery.min.js"></script>
 
     <meta charset="utf-8">
@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Подготовка к тесту</title>
+    <title>Тест</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">
 
@@ -103,7 +103,7 @@
 
       .question-block {
         margin-top: 5rem!important;
-        margin-bottom: 5rem!important;
+        margin-bottom: 1rem!important;
       }
 
       .sidebar {
@@ -111,7 +111,7 @@
       }
     </style>
 
-
+    
     <!-- Custom styles for this template -->
     <link href="/static/css/sign-in.css" rel="stylesheet">
   </head>
@@ -122,12 +122,12 @@
 <div class="container-fluid h-90">
   <div class="row">
     <!-- Sidebar Menu -->
-    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapsing collapse h-100" data-bs-toggle="collapse" id="navigation">
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse h-100" data-bs-toggle="collapse" id="navigation">
         <div class="align-items-start">
           <div class="nav flex-column nav-pills me-3 h-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <button class="nav-link active" id="inf" data-bs-toggle="pill" data-bs-target="#information" type="button" role="tab" aria-controls="v-pills-messages" aria-selected="true">Информация</button>
             {% for num in variant %}
-            <button class="nav-link disabled" id="q_{{ num }}" data-bs-toggle="pill" data-bs-target="#question_{{ num }}" type="button" role="tab" aria-controls="v-pills-message" aria-selected="false">Вопрос {{ num }}</button>
+            <button class="nav-link" id="q_{{ num }}" data-bs-toggle="pill" data-bs-target="#question_{{ num }}" type="button" role="tab" aria-controls="v-pills-message" aria-selected="false">Вопрос {{ num }}</button>
             {% endfor %}
           </div>
         </div>
@@ -135,17 +135,81 @@
 
     <!-- Main content -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <form method="post">
+      <form action="{{ url_for('get_test_results') }}" method="post">
         <div class="tab-content" id="v-pills-tabContent">
             <div class="tab-pane fade show active" id="information" role="tabpanel" aria-labelledby="v-pills-message-tab">
               {% include "test_pages/instructions/for_test.html" %}
-              <button class="btn btn-primary" data-bs-toggle="modal" name="start_test" type="submit">Начать контрольную</button>
             </div>
-        </div>
+            {% for question_number in variant %}
+            <div class="tab-pane fade" id="question_{{ question_number }}" role="tabpanel" aria-labelledby="v-pills-message-tab">
+              <div class="ck-content question-block">
+                <h1 class="h4 fw-normal lh-base">
+                  {{ variant[question_number].q_text | safe }}
+                </h1>
+              </div>
+              {% if variant[question_number].q_files %}
+                <div class="container-fluid">
+                {% for file in variant[question_number].q_files.split("&") %}
+                    <a class="mb-2 h4" href="{{ url_for('get_file', path=file, filename=str(question_number) + '.' + file.split('.')[-1]) }}" download>{{ question_number }}.{{ file.split(".")[-1] }}</a>
+                {% endfor %}
+                </div>
+                <br>
+              {% endif %}
+                <div class="form px-2">
+                    <p class="h5 ms-5" align="left">Ответ здесь</p>
+                    <input type="text" class="form-control mb-5 ms-4 mt-3 w-50" id="{{ question_number }}" name="q_{{ question_number }}">
+                </div>
+            {% if question_number == max_question_number %}
+              <div class="mb-3"></div>
+              <hr size="10" color="blue">
+              <div class="flex-row d-flex justify-content-start">
+                <button
+                        class="btn btn-secondary py-2 mb-2"
+                        id="finish"
+                        data-bs-toggle="modal"
+                        data-bs-target="#loading"
+                        type="submit"
+                >
+                  Закончить тест
+                </button>
+              </div>
+            {% endif %}
+            </div>
+            {% endfor %}
+          </div>
       </form>
     </main>
   </div>
 </div>
+<script>
+  $(document).ready(function() {
+    $('table').addClass('table table-bordered table-hover');
+    $('tr').addClass('table-light');
+    $('blockquote').addClass('blockquote vr');
+  });
+</script>
 <script src="/static/js/bootstrap.bundle.min.js"></script>
+<script>
+  let time = {{ test_time }}; // Задаём начальное время
+  const timer = setInterval(() => {
+    if (time == 300) {
+      document.getElementById('clock').className = "btn btn-outline-warning"
+    }
+    else if (time == 120) {
+      document.getElementById('clock').className = "btn btn-outline-danger"
+    }
+    if (time > 0) {
+      document.getElementById('countdown').textContent = ('0' + Math.floor(time/ (60 * 60))).slice(-2) + " : " + ('0' + Math.floor((time / 60) % 60)).slice(-2) + " : " + ('0' + Math.floor(time % 60)).slice(-2);
+    }
+    else if (time == 0) {
+      document.getElementById('countdown').textContent = "Необходимо закончить тест"
+    }
+    else if (time <= -10) {
+      clearInterval(timer) // Останавливаем таймер, поскольку время истекло
+      document.getElementById('finish').click();
+     }
+      time--; // С каждой секундой уменьшаем время
+  }, 1000); // Интервал делаем одной секунды
+</script>
 </body>
 </html>

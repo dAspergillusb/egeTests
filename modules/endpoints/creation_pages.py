@@ -47,7 +47,6 @@ def register_creation_pages(app: FastAPI) -> None:
                 "q_right_answer": q_right_answer
             }
         )
-
         return TEMPLATES.TemplateResponse(
             name="/test_pages/creation_question.html",
             context={
