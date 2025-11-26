@@ -8,15 +8,6 @@ from ..databases.InformaticsDB import Informatics, InformaticsDB
 def connect_database() -> InformaticsDB:
     return InformaticsDB()
 
-def get_test_var() -> dict[Column[Integer], Type[Informatics]]:
-    database: InformaticsDB = connect_database()
-    questions: defaultdict[Column[Integer], list[Type[Informatics]]] = defaultdict(list)
-    for question in database.session.query(Informatics).all():
-        questions[question.q_number].append(question)
-    return {
-        num: choice(questions.get(num)) for num in questions
-    }
-
 def save_test_question(question_data: dict[str, str | int]) -> bool:
     database: InformaticsDB = connect_database()
     print(question_data)
@@ -24,5 +15,14 @@ def save_test_question(question_data: dict[str, str | int]) -> bool:
 
     return True
 
+def get_test_var() -> dict[Column[Integer], Type[Informatics]]:
+    database: InformaticsDB = connect_database()
+    questions: defaultdict[Column[Integer], list[Type[Informatics]]] = defaultdict(list)
+    for question in database.session.query(Informatics).all():
+        questions[question.q_number].append(question)
+
+    return {
+        num: choice(questions.get(num)) for num in questions
+    }
 
 

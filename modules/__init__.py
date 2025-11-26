@@ -1,2 +1,3 @@
 from .endpoints.main_pages import register_main_endpoints
 from .endpoints.creation_pages import register_creation_pages
+from .endpoints.tests_pages import register_tests_pages

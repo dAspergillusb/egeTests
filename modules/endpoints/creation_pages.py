@@ -1,14 +1,9 @@
 from typing import Annotated
-from fastapi import APIRouter, FastAPI, Request, Form, UploadFile
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, Request, Form, UploadFile
 from starlette.templating import _TemplateResponse
 from ..functions.database_operations import save_test_question
 from ..functions.files_operations import save_to_file
-
-
-ROUTER: APIRouter = APIRouter(prefix="/pages", tags=["Frontend"])
-TEMPLATES: Jinja2Templates = Jinja2Templates(directory="modules/endpoints/templates")
+from .main_pages import TEMPLATES
 
 def register_creation_pages(app: FastAPI) -> None:
 

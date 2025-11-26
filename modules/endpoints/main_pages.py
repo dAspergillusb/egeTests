@@ -6,6 +6,7 @@ from sqlalchemy import Integer, Column
 from starlette.templating import _TemplateResponse
 from ..databases.InformaticsDB import InformaticsDB
 from ..functions.database_operations import get_test_var
+from .config import ACCEPTED_NAMES, ACCEPTED_CLASSES
 
 
 ROUTER: APIRouter = APIRouter(prefix="/pages", tags=["Frontend"])
@@ -16,7 +17,7 @@ def register_main_endpoints(app: FastAPI) -> None:
 
     @app.get(path="/")
     def main_page(request: Request) -> _TemplateResponse:
-        #print(dict(request))
+        print(dict(request))
         request.get("")
         return TEMPLATES.TemplateResponse(
             name="sign_in.html",
@@ -35,8 +36,15 @@ def register_main_endpoints(app: FastAPI) -> None:
         try:
             firstname, lastname = name.split()
         except ValueError:
-            pass
-        if name and school_class:
+            return TEMPLATES.TemplateResponse(
+                name="sign_in.html",
+                context={
+                    "request": request,
+                    "check_name_class": True
+                }
+            )
+        print(name, school_class)
+        if name in ACCEPTED_NAMES and school_class in ACCEPTED_CLASSES:
             request.session["name"] = name
             request.session["school_class"] = school_class
             informatics: dict[Column[Integer], Type[InformaticsDB]] = get_test_var()
