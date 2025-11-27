@@ -1,21 +1,23 @@
 from time import time
-from typing import Annotated, Type
-from fastapi import FastAPI, Request, Form, UploadFile
+from typing import Type
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Query
 from starlette.templating import _TemplateResponse
 from sqlalchemy import Column, Integer
 from ..databases.InformaticsDB import Informatics, InformaticsDB
 from ..models .test_result_model import TestResultData
 from ..functions.database_operations import get_test_var
-from ..functions.database_operations import save_test_question, check_test_variant
-from ..functions.files_operations import save_to_file
+from ..functions.database_operations import check_test_variant
 from .main_pages import TEMPLATES
 
 def register_tests_pages(app: FastAPI) -> None:
 
-    @app.get("/test")
-    def get_start_test_page(request: Request) -> _TemplateResponse:
+    @app.get("/test", response_model=None)
+    def get_start_test_page(request: Request) -> _TemplateResponse | RedirectResponse:
         name: str = request.session.get("name")
+        if not name:
+            return RedirectResponse(url="/")
         school_class: str = request.session.get("school_class")
         informatics: dict[Column[Integer], Type[Informatics]] = get_test_var()
         request.session["informatics_variant"] = "&".join(f"{informatics[question].id}" for question in informatics)

@@ -150,7 +150,7 @@
               {% if variant[question_number].q_files %}
                 <div class="container-fluid">
                 {% for file in variant[question_number].q_files.split("&") %}
-                    <a class="mb-2 h4" href="{{ url_for('get_file', path=file, filename=str(question_number) + '.' + file.split('.')[-1]) }}" download>{{ question_number }}.{{ file.split(".")[-1] }}</a>
+                    <a class="mb-2 h4" href="{{ file.replace('//', '/') }}" download>{{ question_number }}.{{ file.split(".")[-1] }}</a>
                 {% endfor %}
                 </div>
                 <br>
@@ -162,13 +162,13 @@
             {% if question_number == max_question_number %}
               <div class="mb-3"></div>
               <hr size="10" color="blue">
-              <div class="flex-row d-flex justify-content-start">
+              <div class="flex-row d-flex justify-content-end">
                 <button
                         class="btn btn-secondary py-2 mb-2"
                         id="finish"
                         data-bs-toggle="modal"
-                        data-bs-target="#loading"
-                        type="submit"
+                        data-bs-target="#confirmation"
+                        type="button"
                 >
                   Закончить тест
                 </button>
@@ -176,6 +176,23 @@
             {% endif %}
             </div>
             {% endfor %}
+          </div>
+          <div class="modal modal-sm fade" id="confirmation" tabindex="-1" data-bs-backdrop="static" aria-hidden="true" role="dialog">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="container" align="middle">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="h4 justify-content-center">Вы уверены, что хотите закончить?</div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="container-fluid">
+                                <button class="btn btn-warning" type="submit">Да</button>
+                                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Нет</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              </div>
           </div>
       </form>
     </main>

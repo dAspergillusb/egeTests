@@ -10,10 +10,10 @@ db.session.commit()"""
 informatics = InformaticsDB().session.query(Informatics).all()
 
 for item in informatics:
-    if item.q_number == 9:
+    if item.q_number == 3:
         print(
             item.q_number,
-            item.q_text,
+            #item.q_text,
             item.q_files,
             item.q_right_answer,
             sep="\n"

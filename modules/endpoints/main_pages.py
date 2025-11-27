@@ -15,10 +15,12 @@ TEMPLATES: Jinja2Templates = Jinja2Templates(directory="modules/endpoints/templa
 
 def register_main_endpoints(app: FastAPI) -> None:
     app.mount("/static", StaticFiles(directory="modules/endpoints/static"), "static")
+    app.mount("/files", StaticFiles(directory="files"), name="files")
 
-    @app.get(path="/")
-    def main_page(request: Request) -> _TemplateResponse:
-
+    @app.get(path="/", response_model=None)
+    def main_page(request: Request) -> _TemplateResponse | RedirectResponse:
+        if request.session.get("name"):
+            return RedirectResponse(url="/test")
         return TEMPLATES.TemplateResponse(
             name="sign_in.html",
             context={
@@ -47,8 +49,9 @@ def register_main_endpoints(app: FastAPI) -> None:
             }
         )
 
-    @ROUTER.get("/files/download/{filename}", response_model=)
-    def get_file(path: str, filename: str) -> FileResponse:
+    @app.get("/files/{problem_num}/{filename}")
+    def get_file(problem_num: str, filename: str) -> FileResponse:
+        path: str = f"/files/{problem_num}/{filename}"
         return FileResponse(path=path, filename=filename)
 
     @app.get("/logout")
