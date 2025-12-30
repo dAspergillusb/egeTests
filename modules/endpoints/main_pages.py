@@ -32,8 +32,8 @@ def register_main_endpoints(app: FastAPI) -> None:
     @app.post(path="/", response_model=None)
     def main_page_login(
             request: Request,
-            name: Annotated[str, Form()],
-            school_class: Annotated[str, Form()]
+            username: Annotated[str, Form()],
+            password: Annotated[str, Form()]
     ) -> _TemplateResponse | RedirectResponse:
         if name in ACCEPTED_NAMES and school_class in ACCEPTED_CLASSES:
             request.session["name"] = name

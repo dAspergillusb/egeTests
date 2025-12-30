@@ -29,7 +29,8 @@ def register_creation_pages(app: FastAPI) -> None:
             file_two: UploadFile,
             file_three: UploadFile,
             file_four: UploadFile,
-            q_right_answer: Annotated[str, Form()]
+            q_right_answer: Annotated[str, Form()],
+            q_difficulty: Annotated[str, Form()]
     ):
         files: list[UploadFile] = [file for file in [file_one, file_two, file_three, file_four] if file.filename]
         file_paths: list[str] = [
@@ -42,6 +43,7 @@ def register_creation_pages(app: FastAPI) -> None:
             question_data={
                 "q_number": q_number,
                 "q_text": q_text,
+                "q_difficulty": q_difficulty,
                 "q_school_class": "11Б",
                 "q_files": "&".join(file_paths),
                 "q_right_answer": q_right_answer

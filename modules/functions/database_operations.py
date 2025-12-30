@@ -2,6 +2,7 @@ from collections import defaultdict
 from random import choice
 from typing import Type
 from sqlalchemy import Integer, Column
+from sqlalchemy.orm import Query
 from ..databases.InformaticsDB import Informatics, InformaticsDB
 
 
@@ -21,7 +22,7 @@ def connect_database() -> InformaticsDB:
 
 def save_test_question(question_data: dict[str, str | int]) -> bool:
     database: InformaticsDB = connect_database()
-    print(question_data)
+    # print(question_data)
     database.add_question(question_data=question_data)
 
     return True
@@ -29,8 +30,9 @@ def save_test_question(question_data: dict[str, str | int]) -> bool:
 
 def check_test_variant(variant: list[int], answers: dict[str, str]) -> tuple[dict[str, str], str]:
     answers_and_marks: dict[str, str] = {}
+    db_informatics: Query[type[Informatics]] = connect_database().session.query(Informatics)
     for q_id in variant:
-        question: Informatics = InformaticsDB().session.query(Informatics).get(q_id)
+        question: Informatics = db_informatics.get(q_id)
         answers_and_marks.update({f"{question.q_number}": "1" if answers.get(f"{question.q_number}") == question.q_right_answer else "0"})
 
     count_right_answers: int = sum(map(int, answers_and_marks.values()))

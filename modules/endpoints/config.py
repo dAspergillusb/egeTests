@@ -1,4 +1,9 @@
 
+RANKS: dict[str, str] = {
+    "student": "student",
+    "teacher": "teacher",
+    "admin": "admin"
+}
 
 ACCEPTED_NAMES: set[str] = {
     "Глаголева Ольга",

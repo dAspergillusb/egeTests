@@ -3,8 +3,20 @@
   <main class="ms-sm-auto col-lg-10 px-md-4">
     <form method="post" enctype=multipart/form-data>
       <div class="w-100">
-        <label class="mb-3 h4">Введите номер типа вопроса:</label>
-        <input type="text" class="form-control mb-5 ms-4 mt-3 w-90" id="q_number" name="q_number" placeholder="">
+        <label class="mb-3 h4">Выберите номер типа вопроса:</label>
+        <select class="form-select mb-5 mt-3" id="q_number" name="q_number">
+            <option selected value="1">1</option>
+            {% for i in range(2, 28) %}
+                <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+
+        <label class="mb-3 h4">Выберете сложность для вопроса:</label>
+        <select class="mb-5 form-select" id="q_difficulty" name="q_difficulty" aria-label="Default select example">
+          <option selected value="Базовый">Базовый</option>
+          <option value="Средний">Средний</option>
+          <option value="Сложный">Сложный</option>
+        </select>
 
         <label class="mb-5 h4">Введите содержимое вопроса (задание):</label>
         <textarea class="ckeditor" id="q_text" name="q_text"></textarea>

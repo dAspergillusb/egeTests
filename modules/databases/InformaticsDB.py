@@ -11,7 +11,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from modules._types.Types import DataBase
 
 
-BASE: declarative_base = declarative_base()
+BASE = declarative_base()
 
 
 class Informatics(BASE):
@@ -23,6 +23,7 @@ class Informatics(BASE):
     q_number: Column[Integer] = Column(Integer, nullable=False)
     q_school_class: Column[String] = Column(String(4), nullable=False)
     q_text: Column[String] = Column(String(250))
+    q_difficulty: Column[String] = Column(String(250))
     q_files: Column[String] = Column(String(250))
     q_right_answer: Column[String] = Column(String(50), nullable=False)
 
@@ -39,6 +40,7 @@ class Informatics(BASE):
             "q_number": self.q_number,
             "q_school_class": self.q_school_class,
             "q_text": self.q_text,
+            "q_difficulty": self.q_difficulty,
             "q_files": self.q_files,
             "q_right_answer": self.q_right_answer
         }
@@ -54,7 +56,7 @@ class InformaticsDB(DataBase):
         self.engine = self._create_engine()
         BASE.metadata.create_all(self.engine)
         BASE.metadata.bind = self.engine
-        self.db_session: sessionmaker[[Session]] = sessionmaker(bind=self.engine)
+        self.db_session: sessionmaker[Session] = sessionmaker(bind=self.engine)
         self.session: Session = self.db_session()
 
     def _create_engine(self) -> Engine:
@@ -74,6 +76,7 @@ class InformaticsDB(DataBase):
         question: Informatics = Informatics(
             q_number=question_data.get("q_number"),
             q_text=question_data.get("q_text"),
+            q_difficulty=question_data.get("q_difficulty"),
             q_school_class=question_data.get("q_school_class"),
             q_files=question_data.get("q_files"),
             q_right_answer=question_data.get("q_right_answer")
