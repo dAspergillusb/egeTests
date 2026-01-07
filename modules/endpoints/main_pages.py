@@ -6,8 +6,10 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Integer, Column
 from starlette.templating import _TemplateResponse
 from ..databases.InformaticsDB import InformaticsDB
+from ..databases.UsersDB import Users
 from ..functions.database_operations import get_test_var
-from .config import ACCEPTED_NAMES, ACCEPTED_CLASSES
+from ..functions.security import check_password
+from .config import USERS_IDS
 
 
 ROUTER: APIRouter = APIRouter(prefix="/pages", tags=["Frontend"])
@@ -35,19 +37,27 @@ def register_main_endpoints(app: FastAPI) -> None:
             username: Annotated[str, Form()],
             password: Annotated[str, Form()]
     ) -> _TemplateResponse | RedirectResponse:
-        if name in ACCEPTED_NAMES and school_class in ACCEPTED_CLASSES:
-            request.session["name"] = name
-            request.session["school_class"] = school_class
+        user: type[Users] | None = USERS_IDS.get(username)
+        if_user_mistake: dict[bool, str | RedirectResponse] = {
+            user and check_password(password=password, password_from_db=f"{user.password}"): RedirectResponse("/test", status_code=302),
+            not user: "Пользователь не найден",
+            not check_password(password=password, password_from_db=f"{user.password}"): "Неправильный пароль",
 
-            return RedirectResponse("/test", status_code=302)
+        }
+        if isinstance(if_user_mistake.get(True), str):
+            return TEMPLATES.TemplateResponse(
+                name="sign_in.html",
+                context={
+                    "request": request,
+                    "check_name_class": True,
+                    "mistake_text": if_user_mistake[True]
+                }
+            )
+        request.session["name"] = user.firstname + user.lastname
+        request.session["school_class"] = user.school_class
+        return if_user_mistake[True]
 
-        return TEMPLATES.TemplateResponse(
-            name="sign_in.html",
-            context={
-                "request": request,
-                "check_name_class": True
-            }
-        )
+
 
     @app.get("/files/{problem_num}/{filename}")
     def get_file(problem_num: str, filename: str) -> FileResponse:

@@ -16,12 +16,13 @@ def get_mark_for_test(count_right_answers: int, questions_value: int) -> str:
     }
     return marks[True]
 
-def connect_database() -> InformaticsDB:
+
+def connect_database_informatics() -> InformaticsDB:
     return InformaticsDB()
 
 
 def save_test_question(question_data: dict[str, str | int]) -> bool:
-    database: InformaticsDB = connect_database()
+    database: InformaticsDB = connect_database_informatics()
     # print(question_data)
     database.add_question(question_data=question_data)
 
@@ -30,7 +31,7 @@ def save_test_question(question_data: dict[str, str | int]) -> bool:
 
 def check_test_variant(variant: list[int], answers: dict[str, str]) -> tuple[dict[str, str], str]:
     answers_and_marks: dict[str, str] = {}
-    db_informatics: Query[type[Informatics]] = connect_database().session.query(Informatics)
+    db_informatics: Query[type[Informatics]] = connect_database_informatics().session.query(Informatics)
     for q_id in variant:
         question: Informatics = db_informatics.get(q_id)
         answers_and_marks.update({f"{question.q_number}": "1" if answers.get(f"{question.q_number}") == question.q_right_answer else "0"})
@@ -41,7 +42,7 @@ def check_test_variant(variant: list[int], answers: dict[str, str]) -> tuple[dic
 
 
 def get_test_var() -> dict[Column[Integer], Type[Informatics]]:
-    database: InformaticsDB = connect_database()
+    database: InformaticsDB = connect_database_informatics()
     questions: defaultdict[Column[Integer], list[Type[Informatics]]] = defaultdict(list)
     for question in database.session.query(Informatics).all():
         questions[question.q_number].append(question)

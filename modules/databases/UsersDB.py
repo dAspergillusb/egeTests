@@ -21,7 +21,6 @@ class Users(BASE):
     lastname: Column[String] = Column(String(100), nullable=False)
     sex: Column[String] = Column(String(8), nullable=False)
     school_class: Column[String] = Column(String(100))
-    subject: Column[String] = Column(String(20), default=None)
     username: Column[String] = Column(String(100), nullable=False)
     password: Column[String] = Column(String(250), nullable=False)
     rank: Column[String] = Column(String(15), default="student")
@@ -31,10 +30,10 @@ class Users(BASE):
         return self.username == item
 
     def __str__(self):
-        return f"User: {self.user_id=}, {self.username}"
+        return f"User: {self.user_id=}, {self.username=}"
 
     def __repr__(self):
-        return f"(( User: {self.user_id=}, {self.username} , {self.subject})) "
+        return f"( User: {self.user_id=}, {self.username=} , {self.rank=}) "
 
 
 class UsersDB:
@@ -59,8 +58,8 @@ class UsersDB:
     def exist_username(self, username: str | Column[String]) -> bool:
         return bool(self.session.query(Users).filter(Users.username == username).first())
 
-    def exist_email(self, email: str | Column[String]) -> bool:
-        return bool(self.session.query(Users).filter(Users.email == email).first())
+    """def exist_email(self, email: str | Column[String]) -> bool:
+        return bool(self.session.query(Users).filter(Users.email == email).first())"""
 
     def add_instance(self, *, user_data: dict[str, str | int | list[str]]) -> bool | None:
         subject: list[str] = user_data.get("subject")
@@ -72,7 +71,6 @@ class UsersDB:
             username=user_data.get("username"),
             password=user_data.get("password"),
             rank=user_data.get("rank"),
-            subject="&".join(subject) if subject else None
         )
 
         self.session.add(user)
@@ -80,7 +78,7 @@ class UsersDB:
         return True
 
     def change_instance(self, user_id: int = None, username: Column[String] = None, *, school_class: str = None, email: str = None,
-                        password: str = None, subject: str = None, rank: str = None, active: bool = None) -> bool | None:
+                        password: str = None, rank: str = None, active: bool = None) -> bool | None:
         if user_id:
             user: Type[Users] = self.session.query(Users).get(user_id)
         elif username:
@@ -96,12 +94,6 @@ class UsersDB:
 
         if password:
             user.password = password
-
-        if subject:
-            if isinstance(subject, list):
-                user.subject = "&".join(subject)
-            elif isinstance(subject, str):
-                user.subject = subject
 
         if rank:
             user.rank = rank
