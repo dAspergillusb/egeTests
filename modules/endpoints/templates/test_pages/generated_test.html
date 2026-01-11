@@ -139,7 +139,7 @@
         <div class="tab-content" id="v-pills-tabContent">
             <div class="tab-pane fade show active" id="information" role="tabpanel" aria-labelledby="v-pills-message-tab">
               {% include "test_pages/instructions/for_test.html" %}
-              <button class="btn btn-primary" data-bs-toggle="modal" name="start_test" type="submit">Начать контрольную</button>
+              <a class="btn btn-primary" href="{{ url_for('test_is_started') }}">Начать контрольную</a>
             </div>
         </div>
       </form>

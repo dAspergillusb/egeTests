@@ -1,8 +1,10 @@
 from typing import Annotated
+from csv import DictReader, reader
 from fastapi import FastAPI, Request, Form, UploadFile
 from starlette.templating import _TemplateResponse
+from ..models.test_creation_model import TestCreation, ImportCSV
 from ..functions.database_operations import save_test_question
-from ..functions.files_operations import save_to_file
+from ..functions.files_operations import save_to_file, create_new_dbs
 from .main_pages import TEMPLATES
 
 def register_creation_pages(app: FastAPI) -> None:
@@ -23,38 +25,75 @@ def register_creation_pages(app: FastAPI) -> None:
     @app.post("/test_constructor")
     def create_question(
             request: Request,
-            q_number: Annotated[str, Form()],
-            q_text: Annotated[str, Form()],
-            file_one: UploadFile,
-            file_two: UploadFile,
-            file_three: UploadFile,
-            file_four: UploadFile,
-            q_right_answer: Annotated[str, Form()],
-            q_difficulty: Annotated[str, Form()]
-    ):
-        files: list[UploadFile] = [file for file in [file_one, file_two, file_three, file_four] if file.filename]
+            data_for_create: TestCreation = Form(...),
+    ) -> _TemplateResponse:
+        # print(data_for_create)
         file_paths: list[str] = [
             save_to_file(
-                q_number=q_number,
+                q_number=data_for_create.get_q_number(),
                 file=file
-            ) for file in files
+            ) for file in data_for_create.get_files()
         ]
-        save_test_question(
+        saved: bool = save_test_question(
             question_data={
-                "q_number": q_number,
-                "q_text": q_text,
-                "q_difficulty": q_difficulty,
-                "q_school_class": "11Б",
+                "q_number": data_for_create.get_q_number(),
+                "q_text": data_for_create.get_q_text(),
+                "q_difficulty": data_for_create.get_q_difficulty(),
+                "q_school_class": "11",
                 "q_files": "&".join(file_paths),
-                "q_right_answer": q_right_answer
+                "q_right_answer": data_for_create.get_answers()
             }
         )
+        is_mistake: dict[bool, tuple[str, str]] = {
+            saved: ("Успех!", "Вопрос успешно сохранён!"),
+            not saved: ("Ошибка!", "Проверьте правильно ли заполнена форма.")
+        }
         return TEMPLATES.TemplateResponse(
             name="/test_pages/creation_question.html",
             context={
                 "request": request,
                 "firstname": request.session.get("firstname"),
-                "lastname": request.session.get("lastname")
+                "lastname": request.session.get("lastname"),
+                "mistake_text": is_mistake[True]
             }
         )
 
+    @app.get("/import_from_csv")
+    def get_page_import_from_csv(request: Request) -> _TemplateResponse:
+        return TEMPLATES.TemplateResponse(
+            name="import_from_csv.html",
+            context={
+                "request": request,
+                "mistake": "not",
+            }
+        )
+
+    @app.post("/import_from_csv")
+    def post_import_from_csv(
+            request: Request,
+            data_to_load: ImportCSV = Form(default=""),
+    ) -> _TemplateResponse:
+        # print(data_to_load)
+        inf_db_name: str = data_to_load.inf_db_name
+        u_db_name: str = data_to_load.u_db_name
+        u_stat_db_name: str = data_to_load.u_stat_db_name
+        csv_file: str = data_to_load.csv_file.file.read().decode("utf-8")
+        new_dbs: bool = create_new_dbs(
+            csv_file=csv_file,
+            u_db_name=u_db_name,
+            u_stat_db_name=u_stat_db_name,
+            inf_db_name=inf_db_name,
+        )
+        mistakes: dict[bool, str] = {
+            new_dbs: "Базы данных успешно созданы",
+            not new_dbs: "В csv-файле есть ошибки. База не создана!"
+        }
+        # print([item for item in reader(data_to_load.csv_file.file.read().decode("utf-8"), delimiter=";")])
+        return TEMPLATES.TemplateResponse(
+            name="import_from_csv.html",
+            context={
+                "request": request,
+                "mistake": new_dbs,
+                "mistake_text": mistakes[True]
+            }
+        )

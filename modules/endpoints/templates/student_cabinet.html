@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+  <head>
+    <link rel="stylesheet" href="/static/css/ckeditor5.css"/>
+    <script src="/static/js/chart.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.122.0">
+    <title>Подготовка к тесту</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+
+<link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+
+      .b-example-divider {
+        width: 100%;
+        height: 3rem;
+        background-color: rgba(0, 0, 0, .1);
+        border: solid rgba(0, 0, 0, .15);
+        border-width: 1px 0;
+        box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+      }
+
+      .b-example-vr {
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 100vh;
+      }
+
+      .bi {
+        vertical-align: -.125em;
+        fill: currentColor;
+      }
+
+      .nav-scroller {
+        position: relative;
+        z-index: 2;
+        height: 2.75rem;
+        overflow-y: hidden;
+      }
+
+      .nav-scroller .nav {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+        margin-top: -1px;
+        overflow-x: auto;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .btn-bd-primary {
+        --bd-violet-bg: #712cf9;
+        --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+        --bs-btn-font-weight: 600;
+        --bs-btn-color: var(--bs-white);
+        --bs-btn-bg: var(--bd-violet-bg);
+        --bs-btn-border-color: var(--bd-violet-bg);
+        --bs-btn-hover-color: var(--bs-white);
+        --bs-btn-hover-bg: #6528e0;
+        --bs-btn-hover-border-color: #6528e0;
+        --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+        --bs-btn-active-color: var(--bs-btn-hover-color);
+        --bs-btn-active-bg: #5a23c8;
+        --bs-btn-active-border-color: #5a23c8;
+      }
+
+      .bd-mode-toggle {
+        z-index: 1500;
+      }
+
+      .bd-mode-toggle .dropdown-menu .active .bi {
+        display: block !important;
+      }
+
+      .questions {
+        text-align: center;
+       }
+
+      .question-block {
+        margin-top: 5rem!important;
+        margin-bottom: 5rem!important;
+      }
+
+      .sidebar {
+        height: 80vh;
+      }
+    </style>
+
+
+    <!-- Custom styles for this template -->
+    <link href="/static/css/sign-in.css" rel="stylesheet">
+  </head>
+  <body>
+
+  {% include "navbar/navbar_top_student.html" %}
+
+<div class="container-fluid h-90">
+  <div class="row">
+    <!-- Sidebar Menu -->
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapsing collapse h-100" data-bs-toggle="collapse" id="navigation">
+        <div class="align-items-start">
+          <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+            <button class="nav-link active" id="com-stat" data-bs-toggle="pill" data-bs-target="#common-statistics" type="button" role="tab" aria-controls="common-statistics" aria-selected="true">Таблица</button>
+            <button class="nav-link" id="q-stat" data-bs-toggle="pill" data-bs-target="#questions-statistics" type="button" role="tab" aria-controls="questions-statistics" aria-selected="false">Гистограммы</button>
+          </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <div class="tab-content" id="v-pills-tabContent">
+          <div class="tab-pane fade show active" id="common-statistics" role="tabpanel" aria-labelledby="com-stat">
+            <p class="h4 lh-base mb-2">
+              Статистика ученика в виде таблицы:
+            </p>
+            <table class="table table-bordered border-dark table-secondary table-hover w-75">
+              <thead>
+                <tr>
+                  <th scope="col">Тип статистики</th>
+                  <th scope="col">Общее число решенных заданий</th>
+                  <th scope="col">Общее число правильных ответов</th>
+                  <th scope="col">Процент выполнения</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for i in range(len(labels)) %}
+                <tr>
+                  <td>
+                    {{ labels[i] }}
+                  </td>
+                  <td>
+                    {{ common_values[i] }} шт.
+                  </td>
+                  <td>
+                    {{ right_answers_values[i] }} шт.
+                  </td>
+                  <td>
+                    {{ accuracy_persent_values[i] }} %
+                  </td>
+                </tr>
+              {% endfor %}
+                <tr class="table-bordered border-dark table-info">
+                  <td>
+                    Всего
+                  </td>
+                  <td>
+                    {{ common_statistics.get("absolute_questions_value") }} шт.
+                  </td>
+                  <td>
+                    {{ common_statistics.get("absolute_right_answers_value") }} шт.
+                  </td>
+                  <td>
+                    {{ common_statistics.get("absolute_accuracy_persent") }} %
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="tab-pane fade" id="questions-statistics" role="tabpanel" aria-labelledby="q-stat">
+            <p class="h4 lh-base mb-2">
+              Статистика ученика в виде гистограмм:
+            </p>
+            <div style="width:80%;"><canvas id="q-statistics" width="400" height="200" aria-label="questions-type-statistics" role="img"></canvas></div>
+            <div style="width:80%;"><canvas id="p-statistics" width="400" height="200" aria-label="questions-type-statistics" role="img"></canvas></div>
+          </div>
+        </div>
+      <br>
+      <script>
+        const qStat = document.getElementById('q-statistics');
+        new Chart(qStat, {
+          type: 'bar',
+          data: {
+            labels: {{  labels | safe  }},
+            datasets: [{
+              label: "Число решённых заданий",
+              data: {{  common_values | safe  }},
+              borderWidth: 1
+            },
+            {
+              label: "Число правильных ответов",
+              data: {{ right_answers_values | safe }},
+              borderWidth: 1
+            }]
+          },
+          options: {
+            plugins: {
+              title: {
+                display: true,
+                text: 'Статистика по каждому типу задания',
+                font: {
+                  size: 30
+                },
+              },
+            },
+          }
+        });
+      </script>
+      <script>
+        const pStat = document.getElementById('p-statistics');
+        new Chart(pStat, {
+          type: 'bar',
+          data: {
+            labels: {{  labels | safe  }},
+            datasets: [{
+              label: "Частота выполнения типа задания",
+              data: {{  common_values | safe  }},
+              borderWidth: 1
+            }
+            ]
+          },
+          options: {
+            plugins: {
+              title: {
+                display: true,
+                text: 'Статистика по частоте выполнения для каждого типа задания',
+                font: {
+                  size: 30
+                },
+              },
+            },
+          }
+        });
+      </script>
+    </main>
+  </div>
+</div>
+  <script src="/static/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

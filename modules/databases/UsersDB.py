@@ -61,8 +61,7 @@ class UsersDB:
     """def exist_email(self, email: str | Column[String]) -> bool:
         return bool(self.session.query(Users).filter(Users.email == email).first())"""
 
-    def add_instance(self, *, user_data: dict[str, str | int | list[str]]) -> bool | None:
-        subject: list[str] = user_data.get("subject")
+    def add_instance(self, *, user_data: dict[str, str | int]) -> bool | None:
         user = Users(
             firstname=user_data.get("firstname"),
             lastname=user_data.get("lastname"),

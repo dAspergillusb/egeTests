@@ -98,30 +98,50 @@
   <body class="d-flex align-items-center py-4 bg-body-tertiary">
 
     
-<main class="form-signin m-auto">
-  <form method="post">
-    <h1 class="h4 mb-4 fw-normal">Введите ниже данные:</h1>
-
-    <div class="form-floating">
-      <input type="text" minlength="4" class="form-control" id="username" name="username" placeholder="">
-      <label for="username">Имя пользователя</label>
-    </div>
-    <div class="form-floating">
-      <input type="text" class="form-control" id="password" name="password" placeholder="Класс">
-      <label for="username">Пароль</label>
-    </div>
-    {% if check_name_class %}
-      <div class="form-floating">
-        <h1 class="h6 mb-6 fw-normal" style="color: Tomato" align="middle">{{ mistake_text }}</h1>
+    <main class="container-fluid">
+      <div class="d-flex justify-content-center">
+        <h1 class="h3 mb-2 fw-normal" style="text-align:center;">Добро пожаловать в систему мониторинга успеваемости по ЕГЭ Информатика</h1>
       </div>
-    {% endif %}
-    <div class="form-check text-start my-3">
-    </div>
-    <button class="btn btn-primary w-100 py-2 mb-2" name="confirm" value="signin" type="submit">Пройти тест</button>
-    <p class="mt-5 mb-3 text-body-secondary" align="middle">&copy; Все права защищены. 2025</p>
-  </form>
-</main>
-<script src="/static/js/bootstrap.bundle.min.js"></script>
+      <form class="form-signin m-auto" method="post">
+        <h1 class="h4 mb-4 fw-normal">Введите данные ниже:</h1>
 
+        <div class="form-floating">
+          <div class="input-group">
+            <input type="text" class="form-control" id="username" name="username" placeholder="Имя пользователя">
+          </div>
+        </div>
+        <div class="form-floating">
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" name="password" placeholder="Пароль">
+            <button class="btn btn-outline-secondary" type="button" id="showPasswordButton" onclick="showPassword()">
+              <img src="/static/icons/hide.png" id="imgPassword">
+            </button>
+          </div>
+        </div>
+        {% if check_name_class %}
+          <div class="form-floating">
+            <h1 class="h6 mb-6 fw-normal" style="color: Tomato;" align="middle">{{ mistake_text }}</h1>
+          </div>
+        {% endif %}
+        <p></p>
+        <button class="btn btn-primary w-100 py-2 mb-2" name="confirm" value="signin" type="submit">Войти</button>
+        <p class="mt-5 mb-3 text-body-secondary" align="middle">&copy; Все права защищены. 2026</p>
+      </form>
+    </main>
+      <script src="/static/js/bootstrap.bundle.min.js"></script>
+      <script>
+        function showPassword() {
+          var input = document.getElementById('password');
+          var buttonImg = document.getElementById('imgPassword');
+          if (input.type == 'text') {
+            input.type = 'password';
+            buttonImg.src = '/static/icons/hide.png';
+          }
+          else {
+            input.type = 'text';
+            buttonImg.src = '/static/icons/show.png';
+          };
+        };
+      </script>
     </body>
 </html>

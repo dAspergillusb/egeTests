@@ -1,0 +1,138 @@
+from pydantic import BaseModel
+
+
+class TestVarOne(BaseModel):
+    q_1: str = ""
+    q_2: str = ""
+    q_3: str = ""
+    q_4: str = ""
+    q_5: str = ""
+    q_6: str = ""
+    q_7: str = ""
+    q_8: str = ""
+    q_9: str = ""
+    q_10: str = ""
+    q_11: str = ""
+    q_12: str = ""
+    q_13: str = ""
+    q_14: str = ""
+    q_15: str = ""
+    q_16: str = ""
+    q_17: str = ""
+    q_18: str = ""
+    q_19: str = ""
+    q_20: str = ""
+    q_21: str = ""
+    q_22: str = ""
+    q_23: str = ""
+    q_24: str = ""
+    q_25: str = ""
+    q_26: str = ""
+    q_27: str = ""
+    q_check_base_1: str = ""
+    q_check_base_2: str = ""
+    q_check_base_3: str = ""
+    q_check_base_4: str = ""
+    q_check_base_5: str = ""
+    q_check_base_6: str = ""
+    q_check_base_7: str = ""
+    q_check_base_8: str = ""
+    q_check_base_9: str = ""
+    q_check_base_10: str = ""
+    q_check_base_11: str = ""
+    q_check_base_12: str = ""
+    q_check_base_13: str = ""
+    q_check_base_14: str = ""
+    q_check_base_15: str = ""
+    q_check_base_16: str = ""
+    q_check_base_17: str = ""
+    q_check_base_18: str = ""
+    q_check_base_19: str = ""
+    q_check_base_20: str = ""
+    q_check_base_21: str = ""
+    q_check_base_22: str = ""
+    q_check_base_23: str = ""
+    q_check_base_24: str = ""
+    q_check_base_25: str = ""
+    q_check_base_26: str = ""
+    q_check_base_27: str = ""
+    q_check_middle_1: str = ""
+    q_check_middle_2: str = ""
+    q_check_middle_3: str = ""
+    q_check_middle_4: str = ""
+    q_check_middle_5: str = ""
+    q_check_middle_6: str = ""
+    q_check_middle_7: str = ""
+    q_check_middle_8: str = ""
+    q_check_middle_9: str = ""
+    q_check_middle_10: str = ""
+    q_check_middle_11: str = ""
+    q_check_middle_12: str = ""
+    q_check_middle_13: str = ""
+    q_check_middle_14: str = ""
+    q_check_middle_15: str = ""
+    q_check_middle_16: str = ""
+    q_check_middle_17: str = ""
+    q_check_middle_18: str = ""
+    q_check_middle_19: str = ""
+    q_check_middle_20: str = ""
+    q_check_middle_21: str = ""
+    q_check_middle_22: str = ""
+    q_check_middle_23: str = ""
+    q_check_middle_24: str = ""
+    q_check_middle_25: str = ""
+    q_check_middle_26: str = ""
+    q_check_middle_27: str = ""
+    q_check_hard_1: str = ""
+    q_check_hard_2: str = ""
+    q_check_hard_3: str = ""
+    q_check_hard_4: str = ""
+    q_check_hard_5: str = ""
+    q_check_hard_6: str = ""
+    q_check_hard_7: str = ""
+    q_check_hard_8: str = ""
+    q_check_hard_9: str = ""
+    q_check_hard_10: str = ""
+    q_check_hard_11: str = ""
+    q_check_hard_12: str = ""
+    q_check_hard_13: str = ""
+    q_check_hard_14: str = ""
+    q_check_hard_15: str = ""
+    q_check_hard_16: str = ""
+    q_check_hard_17: str = ""
+    q_check_hard_18: str = ""
+    q_check_hard_19: str = ""
+    q_check_hard_20: str = ""
+    q_check_hard_21: str = ""
+    q_check_hard_22: str = ""
+    q_check_hard_23: str = ""
+    q_check_hard_24: str = ""
+    q_check_hard_25: str = ""
+    q_check_hard_26: str = ""
+    q_check_hard_27: str = ""
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            attr[2:]: getattr(self, attr) for attr in self.__dict__
+        }
+
+
+class TestVarTwo(BaseModel):
+    test_range: str = ""
+
+    def to_dict(self) -> dict[str, str]:
+        return {"test_range": self.test_range}
+
+
+class TestVarThree(BaseModel):
+    include_basic: str = ""
+    include_middle: str = ""
+    include_hard: str = ""
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            attr: getattr(self, attr) for attr in self.__dict__
+        }
+
+if __name__ == '__main__':
+    print(TestVarOne().to_dict())

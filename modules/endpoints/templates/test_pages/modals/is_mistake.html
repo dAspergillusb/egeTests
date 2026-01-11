@@ -1,0 +1,21 @@
+<a id="modal_open" data-bs-toggle="modal" data-bs-target="#isMistake"></a>
+      <div class="modal fade" id="isMistake" tabindex="-1" aria-labelledby="Ошибка?" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">{{ mistake_text[0] }}</h1>
+            </div>
+            <div class="modal-body">
+                {{ mistake_text[1] }}
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+<script>
+    setTimeout(function() {
+      document.getElementById("modal_open").click();
+      }, 500);
+  </script>

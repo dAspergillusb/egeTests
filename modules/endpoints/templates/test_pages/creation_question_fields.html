@@ -55,17 +55,66 @@
                 aria-label="Upload"
         >
         <label class="mb-3 h4">Добавьте правильный ответ:</label>
-            <div class="container-fluid" id="q_right_answer_container">
-              <div class="input-group mb-3">
-                  <input
-                          type="text"
-                          class="form-control"
-                          name="q_right_answer"
-                          id="q_right_answer"
-                          value=""
-                  >
+        <div class="accordion" id="accordionExample">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                У вопроса один ответ
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+              <div class="accordion-body">
+                <div class="container-fluid" id="q_right_answer_container">
+                  <div class="input-group mb-3">
+                      <input
+                              type="text"
+                              class="form-control"
+                              name="q_right_answer"
+                              id="q_right_answer"
+                              value=""
+                      >
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                У вопроса много ответов
+              </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+              <div class="accordion-body">
+                  <div class="input-group w-50">
+                    <span class="input-group-text" style="width:230px;">Первая пара ответов</span>
+                    <input type="text" aria-label="1" class="form-control" name="q_right_answer_1" id="q_right_answer_1">
+                    <input type="text" aria-label="2" class="form-control" name="q_right_answer_2" id="q_right_answer_2">
+                  </div>
+                  <div class="input-group w-50">
+                    <span class="input-group-text" style="width:230px;">Вторая пара ответов</span>
+                    <input type="text" aria-label="3" class="form-control" name="q_right_answer_3" id="q_right_answer_3">
+                    <input type="text" aria-label="4" class="form-control" name="q_right_answer_4" id="q_right_answer_4">
+                  </div>
+                  <div class="input-group w-50">
+                    <span class="input-group-text" style="width:230px;">Третья пара ответов</span>
+                    <input type="text" aria-label="5" class="form-control" name="q_right_answer_5" id="q_right_answer_5">
+                    <input type="text" aria-label="6" class="form-control" name="q_right_answer_6" id="q_right_answer_6">
+                  </div>
+                  <div class="input-group w-50">
+                    <span class="input-group-text" style="width:230px;">Четвёртая пара ответов</span>
+                    <input type="text" aria-label="7" class="form-control" name="q_right_answer_7" id="q_right_answer_7">
+                    <input type="text" aria-label="8" class="form-control" name="q_right_answer_8" id="q_right_answer_8">
+                  </div>
+                  <div class="input-group w-50">
+                    <span class="input-group-text" style="width:230px;">Пятая пара ответов</span>
+                    <input type="text" aria-label="9" class="form-control" name="q_right_answer_9" id="q_right_answer_9">
+                    <input type="text" aria-label="10" class="form-control" name="q_right_answer_10" id="q_right_answer_10">
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
             <hr size="10" color="blue">
 

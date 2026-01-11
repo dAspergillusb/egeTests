@@ -1,0 +1,55 @@
+<div class="container-fluid">
+    <!-- Main content -->
+  <main class="ms-sm-auto px-md-4">
+    <form action="{{ url_for('post_import_from_csv') }}" method="post" enctype=multipart/form-data>
+      <div class="w-100">
+        <label class="mb-3 h4">Введите название базы данных для вопросов (<b style="color:#C62828;">только, если будет новая база данных с вопросами!</b>):</label>
+        <input
+                type="text"
+                class="form-control mb-5 w-50"
+                name="inf_db_name"
+                id="inf_db_name"
+                value="informatics_db"
+        >
+        <label class="mb-3 h4">Введите название базы данных для учеников:</label>
+        <input
+                type="text"
+                class="form-control mb-5 w-50"
+                name="u_db_name"
+                id="u_db_name"
+                value="users_db"
+        >
+        <label class="mb-3 h4">Введите название базы данных для статистики учеников:</label>
+        <input
+                type="text"
+                class="form-control mb-5 w-50"
+                name="u_stat_db_name"
+                id="u_stat_db_name"
+                value="users_statistics_db"
+        >
+        <label class="mb-3 h4">Добавьте csv-файл с данными, на основе которых создается база данных:</label>
+        <input
+                type="file"
+                class="form-control mb-5 ms-4 mt-3 w-90"
+                id="csv_file"
+                name="csv_file"
+                aria-describedby="inputGroupFileAddon04"
+                aria-label="Upload"
+        >
+          <hr   size="10" color="blue">
+          <div class="d-grid gap-2 d-md-block">
+            <button class="btn btn-secondary py-2 mb-2" data-bs-toggle="modal" value="{{ question_number }}"  name="button" data-bs-target="#status_loading" type="submit">Сгенерировать базы данных</button>
+          </div>
+      </div>
+    </form>
+    <br>
+    {% if mistake == "not" %}
+    <br>
+    {% elif mistake %}
+    <p style="color:Tomato;">{{ mistake_text }}</p>
+    {% else %}
+    <p style="color:Green;">{{ mistake_text }}</p>
+    {% endif %}
+    <br>
+  </main>
+</div>

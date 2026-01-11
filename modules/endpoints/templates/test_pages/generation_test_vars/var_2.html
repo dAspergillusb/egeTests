@@ -1,0 +1,23 @@
+<table class="table table-light">
+  <tbody>
+    <tr>
+      <td class="h4">
+        <p class="h5 lh-base">
+          &nbsp;&nbsp;При помощи ползунка выберете необходимое количество заданий в тесте и нажмите на кнопку <b style="color:#C62828;"><u>Составить вариант</u></b>.
+        </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr size="7" color="blue">
+<label for="test_range" class="form-label">Количество заданий в тесте</label>
+<div class="row w-75">
+    <div class="col-md-11">
+        <input type="range" class="form-range" min="1" max="11" value="11" id="test_range" name="test_range">
+    </div>
+    <div class="col-md-1">
+        <input type="text" readonly style="text-align:center;" class="form-control" value="11" id="test_range_viewer">
+    </div>
+</div>
+<p></p>
+<button class="btn btn-primary" data-bs-toggle="modal" name="start_test" type="submit">Составить вариант</button>

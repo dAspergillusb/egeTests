@@ -1,3 +1,4 @@
+from typing import Iterator
 from sqlalchemy import (
     create_engine,
     Engine,
@@ -16,42 +17,86 @@ BASE = declarative_base()
 class UsersStatistics(BASE):
     __tablename__: str = "statistics"
     id: Column[Integer] = Column(Integer, primary_key=True)
-    subject: Column[String] = Column(String(15), nullable=False)
     firstname: Column[String] = Column(String(100), nullable=False)
     lastname: Column[String] = Column(String(100), nullable=False)
-    user_id: Column[String] = Column(Integer, nullable=False)
     school_class: Column[String] = Column(String(4), nullable=False)
-    common_value: Column[Integer] = Column(Integer)
-    common_max_value: Column[Integer] = Column(Integer)
-    common_not_right: Column[Integer] = Column(Integer)
-    common_percent: Column[Integer] = Column(Integer)
-    test_date: Column[String] = Column(String(20))
+    q_type_1: Column[String] = Column(String(100))
+    q_type_2: Column[String] = Column(String(100))
+    q_type_3: Column[String] = Column(String(100))
+    q_type_4: Column[String] = Column(String(100))
+    q_type_5: Column[String] = Column(String(100))
+    q_type_6: Column[String] = Column(String(100))
+    q_type_7: Column[String] = Column(String(100))
+    q_type_8: Column[String] = Column(String(100))
+    q_type_9: Column[String] = Column(String(100))
+    q_type_10: Column[String] = Column(String(100))
+    q_type_11: Column[String] = Column(String(100))
+    q_type_12: Column[String] = Column(String(100))
+    q_type_13: Column[String] = Column(String(100))
+    q_type_14: Column[String] = Column(String(100))
+    q_type_15: Column[String] = Column(String(100))
+    q_type_16: Column[String] = Column(String(100))
+    q_type_17: Column[String] = Column(String(100))
+    q_type_18: Column[String] = Column(String(100))
+    q_type_19: Column[String] = Column(String(100))
+    q_type_20: Column[String] = Column(String(100))
+    q_type_21: Column[String] = Column(String(100))
+    q_type_22: Column[String] = Column(String(100))
+    q_type_23: Column[String] = Column(String(100))
+    q_type_24: Column[String] = Column(String(100))
+    q_type_25: Column[String] = Column(String(100))
+    q_type_26: Column[String] = Column(String(100))
+    q_type_27: Column[String] = Column(String(100))
 
     def __str__(self):
         return (
             f"UserStatistics(id={self.id},"
-            f" user_id={self.user_id},"
-            f" class={self.school_class},"
-            f" subject={self.subject}, "
-            f" common_value={self.common_value},"
-            f" common_max_value={self.common_max_value},"
-            f" common_not_right={self.common_not_right},"
-            f" common_percent={self.common_percent},"
-            f" test_date={self.test_date})"
+            f" Name={self.firstname} {self.lastname},"
+            f" class={self.school_class})"
             )
 
     def __repr__(self):
         return (
             f"UserStatistics(id={self.id},"
-            f" user_id={self.user_id},"
-            f" class={self.school_class},"
-            f" subject={self.subject}, "
-            f" common_value={self.common_value},"
-            f" common_max_value={self.common_max_value},"
-            f" common_not_right={self.common_not_right},"
-            f" common_percent={self.common_percent},"
-            f" test_date={self.test_date})"
+            f" Name={self.firstname} {self.lastname},"
+            f" class={self.school_class})"
             )
+
+    def __iter__(self) -> Iterator:
+        q_types: dict[str, Column[String]] = self.to_dict()
+        for item in q_types:
+            yield q_types[item]
+
+    def to_dict(self) -> dict[str, Column[String]]:
+        return {
+            "q_type_1": self.q_type_1,
+            "q_type_2": self.q_type_2,
+            "q_type_3": self.q_type_3,
+            "q_type_4": self.q_type_4,
+            "q_type_5": self.q_type_5,
+            "q_type_6": self.q_type_6,
+            "q_type_7": self.q_type_7,
+            "q_type_8": self.q_type_8,
+            "q_type_9": self.q_type_9,
+            "q_type_10": self.q_type_10,
+            "q_type_11": self.q_type_11,
+            "q_type_12": self.q_type_12,
+            "q_type_13": self.q_type_13,
+            "q_type_14": self.q_type_14,
+            "q_type_15": self.q_type_15,
+            "q_type_16": self.q_type_16,
+            "q_type_17": self.q_type_17,
+            "q_type_18": self.q_type_18,
+            "q_type_19": self.q_type_19,
+            "q_type_20": self.q_type_20,
+            "q_type_21": self.q_type_21,
+            "q_type_22": self.q_type_22,
+            "q_type_23": self.q_type_23,
+            "q_type_24": self.q_type_24,
+            "q_type_25": self.q_type_25,
+            "q_type_26": self.q_type_26,
+            "q_type_27": self.q_type_27
+        }
 
 
 class UsersStatisticsDB:
@@ -64,7 +109,7 @@ class UsersStatisticsDB:
         self.engine = self._create_engine()
         BASE.metadata.create_all(self.engine)
         BASE.metadata.bind = self.engine
-        self.db_session: sessionmaker[[Session]] = sessionmaker(bind=self.engine)
+        self.db_session: sessionmaker[Session] = sessionmaker(bind=self.engine)
         self.session: Session = self.db_session()
 
     def _create_engine(self) -> Engine:
@@ -75,23 +120,28 @@ class UsersStatisticsDB:
         db_connect: Connection = self.engine.connect()
         return db_connect
 
-    def add_statistics(self, *, subject: str, common_value: int, common_max_value: int, school_class: str,
-                       common_not_right: int, common_percent: int, test_date: str, user_id: int,
-                       firstname: str, lastname: str) -> None:
-        statistics: UsersStatistics = UsersStatistics(
-            subject=subject,
-            user_id=user_id,
-            firstname=firstname,
-            lastname=lastname,
-            school_class=school_class,
-            common_value=common_value,
-            common_max_value=common_max_value,
-            common_not_right=common_not_right,
-            common_percent=common_percent,
-            test_date=test_date
-        )
+    def add_statistics(self, *, statistics_data: dict[str, str]) -> None:
+        statistics: UsersStatistics = UsersStatistics(**statistics_data)
         self.session.add(statistics)
         self.session.commit()
+        # self.session.close()
+
+    def change_statistics(self, id: int, data_to_change: dict[str, list[int]]) -> None:
+        statistics: type[UsersStatistics] = self.session.query(UsersStatistics).get(id)
+        for stat in statistics.to_dict():
+            if data_to_change.get(stat):
+                current_common_value, current_right_value, *_ = map(float, getattr(statistics, stat).split("&"))
+                common_value, right_value = data_to_change.get(stat)
+                # print(current_common_value, current_right_value, common_value, right_value)
+                new_common_value = current_common_value + common_value
+                new_right_value = current_right_value + right_value
+                statistics.__setattr__(stat, "&".join([
+                    f"{new_common_value}",
+                    f"{new_right_value}",
+                    f"{(new_right_value / new_common_value) * 100}",
+                ]))
+        self.session.commit()
+        # self.session.close()
 
 
 if __name__ == '__main__':

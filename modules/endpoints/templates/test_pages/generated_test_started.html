@@ -157,7 +157,16 @@
               {% endif %}
                 <div class="form px-2">
                     <p class="h5 ms-5" align="left">Ответ здесь</p>
-                    <input type="text" class="form-control mb-5 ms-4 mt-3 w-50" id="{{ question_number }}" name="q_{{ question_number }}">
+                    {% if len(variant[question_number].q_right_answer.split("&")) == 1 %}
+                        <input type="text" class="form-control mb-5 ms-4 mt-3 w-50" id="{{ question_number }}" name="q_{{ question_number }}">
+                    {% else %}
+                      {% for num in range(0, len(variant[question_number].q_right_answer.split("&")), 2) %}
+                        <div class="input-group w-50">
+                          <input type="text" aria-label="{{ num + 1 }}" class="form-control" name="q_{{ question_number }}" id="q_{{ num + 1 }}">
+                          <input type="text" aria-label="{{ num + 2 }}" class="form-control" name="q_{{ question_number }}" id="q_{{ num + 2 }}">
+                        </div>
+                      {% endfor %}
+                    {% endif %}
                 </div>
             {% if question_number == max_question_number %}
               <div class="mb-3"></div>

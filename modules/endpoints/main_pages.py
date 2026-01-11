@@ -3,11 +3,11 @@ from fastapi import APIRouter, FastAPI, Request, Form
 from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import Integer, Column
+from sqlalchemy import Integer, Column, String
 from starlette.templating import _TemplateResponse
 from ..databases.InformaticsDB import InformaticsDB
 from ..databases.UsersDB import Users
-from ..functions.database_operations import get_test_var
+from ..databases.UsersStatisticsDB import UsersStatistics, UsersStatisticsDB
 from ..functions.security import check_password
 from .config import USERS_IDS
 
@@ -39,7 +39,7 @@ def register_main_endpoints(app: FastAPI) -> None:
     ) -> _TemplateResponse | RedirectResponse:
         user: type[Users] | None = USERS_IDS.get(username)
         if_user_mistake: dict[bool, str | RedirectResponse] = {
-            user and check_password(password=password, password_from_db=f"{user.password}"): RedirectResponse("/test", status_code=302),
+            user and check_password(password=password, password_from_db=f"{user.password}"): RedirectResponse("/prepare_test", status_code=302),
             not user: "Пользователь не найден",
             not check_password(password=password, password_from_db=f"{user.password}"): "Неправильный пароль",
 
@@ -53,11 +53,60 @@ def register_main_endpoints(app: FastAPI) -> None:
                     "mistake_text": if_user_mistake[True]
                 }
             )
-        request.session["name"] = user.firstname + user.lastname
+        request.session["name"] = f"{user.firstname} {user.lastname}"
         request.session["school_class"] = user.school_class
+        request.session["user_id"] = user.user_id
         return if_user_mistake[True]
 
+    @app.get("/student_cabinet")
+    def get_student_cabinet(request: Request) -> _TemplateResponse:
+        name: str = request.session.get("name")
+        school_class: str = request.session.get("school_class")
+        user_id: int = request.session.get("user_id")
+        student_statistics: UsersStatistics = UsersStatisticsDB().session.query(UsersStatistics).get(user_id)
+        common_statistics: dict[str, float] = {
+            "absolute_questions_value": 0.0,
+            "absolute_right_answers_value": 0.0,
+            "absolute_accuracy_persent": 0.0
+        }
+        # q_student_statistics: dict[str, Column[String]] = student_statistics.to_dict()
+        common_values: list[float] = []
+        right_answers_values: list[float] = []
+        accuracy_persent_values: list[float] = []
+        for q_stat in student_statistics:
+            questions_value, right_answers, accuracy_persent = map(float, q_stat.split("&"))
+            common_statistics["absolute_questions_value"] += questions_value
+            common_statistics["absolute_right_answers_value"] += right_answers
+            # common_statistics["absolute_accuracy_persent"] += accuracy_persent
 
+            common_values.append(questions_value)
+            right_answers_values.append(right_answers)
+            accuracy_persent_values.append(
+                round(
+                    number=accuracy_persent,
+                    ndigits=3
+                )
+            )
+        common_statistics["absolute_accuracy_persent"] = round(
+            number=common_statistics["absolute_right_answers_value"] * 100 / common_statistics["absolute_questions_value"],
+            ndigits=3
+        )
+
+        return TEMPLATES.TemplateResponse(
+            name="student_cabinet.html",
+            context={
+                "request": request,
+                "name": name,
+                "school_class": school_class,
+                "common_statistics": common_statistics,
+                "labels": [f"Тип {num}" for num in range(1, 28)],
+                "common_values": common_values,
+                "right_answers_values": right_answers_values,
+                "accuracy_persent_values": accuracy_persent_values,
+                "len": len,
+                "nav_topic": "Личный кабинет"
+            }
+        )
 
     @app.get("/files/{problem_num}/{filename}")
     def get_file(problem_num: str, filename: str) -> FileResponse:
