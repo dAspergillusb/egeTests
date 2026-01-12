@@ -34,13 +34,14 @@ def create_new_dbs(
 ) -> bool:
     data_to_load: list[dict[str, str | int]] = [
         {
-            "firstname": user[0],
-            "lastname": user[1],
-            "sex": user[2],
-            "school_class": user[3],
-            "username": user[4],
-            "password": generate_code_from_password(user[5])
-        } for user in [line.split(";") for line in csv_file]
+            "firstname": firstname,
+            "lastname": lastname,
+            "sex": sex,
+            "school_class": school_class,
+            "username": username,
+            "password": generate_code_from_password(password=password)
+        }
+        for firstname, lastname, sex, school_class, username, password in [line.split(";") for line in csv_file.split("\n")][:-1]
     ]
     new_u_db: UsersDB = UsersDB(db_name=u_db_name)
     new_u_stat_db: UsersStatisticsDB = UsersStatisticsDB(db_name=u_stat_db_name)
@@ -51,34 +52,7 @@ def create_new_dbs(
             {
                 "firstname": user_data["firstname"],
                 "lastname": user_data["lastname"],
-                "school_class": user_data["school_class"],
-                "q_type_1": "0&0&0",
-                "q_type_2": "0&0&0",
-                "q_type_3": "0&0&0",
-                "q_type_4": "0&0&0",
-                "q_type_5": "0&0&0",
-                "q_type_6": "0&0&0",
-                "q_type_7": "0&0&0",
-                "q_type_8": "0&0&0",
-                "q_type_9": "0&0&0",
-                "q_type_10": "0&0&0",
-                "q_type_11": "0&0&0",
-                "q_type_12": "0&0&0",
-                "q_type_13": "0&0&0",
-                "q_type_14": "0&0&0",
-                "q_type_15": "0&0&0",
-                "q_type_16": "0&0&0",
-                "q_type_17": "0&0&0",
-                "q_type_18": "0&0&0",
-                "q_type_19": "0&0&0",
-                "q_type_20": "0&0&0",
-                "q_type_21": "0&0&0",
-                "q_type_22": "0&0&0",
-                "q_type_23": "0&0&0",
-                "q_type_24": "0&0&0",
-                "q_type_25": "0&0&0",
-                "q_type_26": "0&0&0",
-                "q_type_27": "0&0&0"
+                "school_class": user_data["school_class"]
             }
         )
         change_db_names(

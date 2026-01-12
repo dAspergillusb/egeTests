@@ -64,21 +64,30 @@ def register_main_endpoints(app: FastAPI) -> None:
         school_class: str = request.session.get("school_class")
         user_id: int = request.session.get("user_id")
         student_statistics: UsersStatistics = UsersStatisticsDB().session.query(UsersStatistics).get(user_id)
-        common_statistics: dict[str, float] = {
+        common_statistics: dict[str, float | str] = {
             "absolute_questions_value": 0.0,
             "absolute_right_answers_value": 0.0,
-            "absolute_accuracy_persent": 0.0
+            "absolute_accuracy_persent": 0.0,
+            "result": ""
         }
         # q_student_statistics: dict[str, Column[String]] = student_statistics.to_dict()
         common_values: list[float] = []
         right_answers_values: list[float] = []
         accuracy_persent_values: list[float] = []
+        conclusions_for_results: list[str] = []
         for q_stat in student_statistics:
             questions_value, right_answers, accuracy_persent = map(float, q_stat.split("&"))
             common_statistics["absolute_questions_value"] += questions_value
             common_statistics["absolute_right_answers_value"] += right_answers
             # common_statistics["absolute_accuracy_persent"] += accuracy_persent
 
+            conclusion_for_result: dict[bool, str] = {
+                0 < accuracy_persent < 40: "Необходимо обратить внимание!",
+                40 <= accuracy_persent < 60: "Необходимо ещё поработать.",
+                60 <= accuracy_persent < 80: "Нормально.",
+                accuracy_persent >= 80: "Всё хорошо."
+            }
+            conclusions_for_results.append(conclusion_for_result.get(True, "Нет данных"))
             common_values.append(questions_value)
             right_answers_values.append(right_answers)
             accuracy_persent_values.append(
@@ -91,7 +100,13 @@ def register_main_endpoints(app: FastAPI) -> None:
             number=common_statistics["absolute_right_answers_value"] * 100 / common_statistics["absolute_questions_value"],
             ndigits=3
         )
-
+        absolute_conclusion_for_result: dict[bool, str] = {
+            0 < common_statistics["absolute_accuracy_persent"] < 40: "Необходимо больше тренироваться!",
+            40 <= common_statistics["absolute_accuracy_persent"] < 60: "Нужно побольше решать задания.",
+            60 <= common_statistics["absolute_accuracy_persent"] < 80: "В целом нормально",
+            common_statistics["absolute_accuracy_persent"] >= 80: "В целом хорошо."
+        }
+        common_statistics["result"] = absolute_conclusion_for_result.get(True, "Нет данных")
         return TEMPLATES.TemplateResponse(
             name="student_cabinet.html",
             context={
@@ -103,6 +118,7 @@ def register_main_endpoints(app: FastAPI) -> None:
                 "common_values": common_values,
                 "right_answers_values": right_answers_values,
                 "accuracy_persent_values": accuracy_persent_values,
+                "conclusions_for_results": conclusions_for_results,
                 "len": len,
                 "nav_topic": "Личный кабинет"
             }

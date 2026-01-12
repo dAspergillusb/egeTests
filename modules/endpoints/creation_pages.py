@@ -78,6 +78,7 @@ def register_creation_pages(app: FastAPI) -> None:
         u_db_name: str = data_to_load.u_db_name
         u_stat_db_name: str = data_to_load.u_stat_db_name
         csv_file: str = data_to_load.csv_file.file.read().decode("utf-8")
+        print(csv_file)
         new_dbs: bool = create_new_dbs(
             csv_file=csv_file,
             u_db_name=u_db_name,

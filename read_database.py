@@ -33,6 +33,7 @@ statistics = UsersStatisticsDB().session.query(UsersStatistics).all()
 
 # UsersDB().change_instance(user_id=1, password=generate_code_from_password("(test#user)"))
 
-pprint(informatics)
+# pprint(informatics)
+pprint(users)
 pprint(statistics)
 pprint(statistics[0].to_dict())

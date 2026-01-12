@@ -139,18 +139,27 @@
             <p class="h4 lh-base mb-2">
               Статистика ученика в виде таблицы:
             </p>
-            <table class="table table-bordered border-dark table-secondary table-hover w-75">
+            <table class="table table-bordered border-dark table-secondary table-hover w-100">
               <thead>
                 <tr>
                   <th scope="col">Тип статистики</th>
                   <th scope="col">Общее число решенных заданий</th>
                   <th scope="col">Общее число правильных ответов</th>
                   <th scope="col">Процент выполнения</th>
+                  <th scope="col">Вывод</th>
                 </tr>
               </thead>
               <tbody>
               {% for i in range(len(labels)) %}
-                <tr>
+              {% if 0 <= accuracy_persent_values[i] < 40 %}
+              <tr class="table-bordered border-dark table-danger">
+              {% elif 40 <= accuracy_persent_values[i] < 60 %}
+              <tr class="table-bordered border-dark table-warning">
+              {% elif 60 <= accuracy_persent_values[i] < 80 %}
+              <tr class="table-bordered border-dark table-primary">
+              {% else %}
+              <tr class="table-bordered border-dark table-success">
+              {% endif %}
                   <td>
                     {{ labels[i] }}
                   </td>
@@ -162,6 +171,9 @@
                   </td>
                   <td>
                     {{ accuracy_persent_values[i] }} %
+                  </td>
+                  <td>
+                    {{ conclusions_for_results[i] }}
                   </td>
                 </tr>
               {% endfor %}
@@ -177,6 +189,9 @@
                   </td>
                   <td>
                     {{ common_statistics.get("absolute_accuracy_persent") }} %
+                  </td>
+                  <td>
+                    {{ common_statistics.get("result") }}
                   </td>
                 </tr>
               </tbody>
@@ -229,7 +244,7 @@
             labels: {{  labels | safe  }},
             datasets: [{
               label: "Частота выполнения типа задания",
-              data: {{  common_values | safe  }},
+              data: {{  accuracy_persent_values | safe  }},
               borderWidth: 1
             }
             ]
