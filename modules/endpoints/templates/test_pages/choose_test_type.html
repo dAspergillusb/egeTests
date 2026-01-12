@@ -165,33 +165,7 @@
     </main>
   </div>
 </div>
-  <script>
-    function changeValue(inputId, buttonId) {
-      var buttonName = document.getElementById(buttonId).name;
-      var input = document.getElementById(inputId);
-      var value = parseInt(input.value);
-      if (buttonName == 'up') {
-        input.value = value + 1;
-      };
-      if (buttonName == 'down') {
-        if (input.value > 0) {
-          input.value = value - 1;
-        };
-      };
-      if (input.value > 0) {
-        document.getElementById('down_' + input.name.slice(-1)).disabled = false;
-      };
-      if (input.value == 0) {
-        document.getElementById('down_' + input.name.slice(-1)).disabled = true;
-      };
-      if (input.value == 10) {
-        document.getElementById('up_' + input.name.slice(-1)).disabled = true;
-      };
-      if (input.value < 10) {
-        document.getElementById('up_' + input.name.slice(-1)).disabled = false;
-      };
-    };
-  </script>
+  <script src="/static/js/check.inputs.js"></script>
   <script>
     const inputValue = document.getElementById('test_range_viewer');
     const inputRange = document.getElementById('test_range');
