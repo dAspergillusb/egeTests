@@ -94,7 +94,7 @@ def register_creation_pages(app: FastAPI) -> None:
             name="import_from_csv.html",
             context={
                 "request": request,
-                "mistake": new_dbs,
+                "mistake": not new_dbs,
                 "mistake_text": mistakes[True]
             }
         )

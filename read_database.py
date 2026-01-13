@@ -17,7 +17,7 @@ db.session.commit()"""
 # session.close()
 
 
-informatics = InformaticsDB().session.query(Informatics).all()
+informatics = InformaticsDB().session.query(Informatics)
 users = UsersDB().session.query(Users).all()
 statistics = UsersStatisticsDB().session.query(UsersStatistics).all()
 
@@ -32,8 +32,9 @@ statistics = UsersStatisticsDB().session.query(UsersStatistics).all()
 #     )
 
 # UsersDB().change_instance(user_id=1, password=generate_code_from_password("(test#user)"))
-
-# pprint(informatics)
-pprint(users)
-pprint(statistics)
-pprint(statistics[0].to_dict())
+# informatics.get(13).q_number = 2
+# informatics.session.commit()
+pprint(informatics.all())
+# pprint(users)
+# pprint(statistics)
+# pprint(statistics[0].to_dict())
