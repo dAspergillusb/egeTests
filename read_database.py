@@ -19,7 +19,7 @@ db.session.commit()"""
 
 informatics = InformaticsDB().session.query(Informatics)
 users = UsersDB().session.query(Users)
-statistics = UsersStatisticsDB().session.query(UsersStatistics)
+statistics = UsersStatisticsDB().session
 
 # for item in informatics:
 #     print(
@@ -34,8 +34,8 @@ statistics = UsersStatisticsDB().session.query(UsersStatistics)
 # UsersDB().change_instance(user_id=1, password=generate_code_from_password("(test#user)"))
 # informatics.get(13).q_number = 2
 # informatics.session.commit()
-pprint(users.get(9))
-pprint(statistics.get(9).to_dict())
+pprint(users.all())
+pprint(statistics.get(UsersStatistics, 1).to_dict())
 # pprint(users)
 # pprint(statistics)
 # pprint(statistics[0].to_dict())

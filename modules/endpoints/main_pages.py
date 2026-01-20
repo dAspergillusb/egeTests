@@ -9,7 +9,6 @@ from ..databases.InformaticsDB import InformaticsDB
 from ..databases.UsersDB import Users
 from ..databases.UsersStatisticsDB import UsersStatistics, UsersStatisticsDB
 from ..functions.security import check_password
-from .config import USERS_IDS
 
 
 ROUTER: APIRouter = APIRouter(prefix="/pages", tags=["Frontend"])
@@ -37,6 +36,7 @@ def register_main_endpoints(app: FastAPI) -> None:
             username: Annotated[str, Form()],
             password: Annotated[str, Form()]
     ) -> _TemplateResponse | RedirectResponse:
+        from .config import USERS_IDS
         user: type[Users] | None = USERS_IDS.get(username)
         if_user_mistake: dict[bool, str | RedirectResponse] = {
             user and check_password(password=password, password_from_db=f"{user.password}"): RedirectResponse("/prepare_test", status_code=302),

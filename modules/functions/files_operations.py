@@ -55,8 +55,8 @@ def create_new_dbs(
                 "school_class": user_data["school_class"]
             }
         )
-        change_db_names(
-            u_db_name=u_db_name,
-            u_stat_db_name=u_stat_db_name
-        )
+    change_db_names(
+        u_db_name=u_db_name,
+        u_stat_db_name=u_stat_db_name
+    )
     return True

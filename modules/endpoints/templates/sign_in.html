@@ -106,15 +106,17 @@
         <h1 class="h4 mb-4 fw-normal">Введите данные ниже:</h1>
 
         <div class="form-floating">
+          <span >Имя пользователя</span>
           <div class="input-group">
             <input type="text" class="form-control" id="username" name="username" placeholder="Имя пользователя">
           </div>
         </div>
         <div class="form-floating">
+          <span>Пароль</span>
           <div class="input-group">
             <input type="password" class="form-control" id="password" name="password" placeholder="Пароль">
             <button class="btn btn-outline-secondary" type="button" id="showPasswordButton" onclick="showPassword()">
-              <img src="/static/icons/hide.png" id="imgPassword">
+              <img src="/static/icons/hide.svg" width="16" height="auto" id="imgPassword"></img>
             </button>
           </div>
         </div>
@@ -135,11 +137,13 @@
           var buttonImg = document.getElementById('imgPassword');
           if (input.type == 'text') {
             input.type = 'password';
-            buttonImg.src = '/static/icons/hide.png';
+            input.class = 'form-control';
+            buttonImg.src = '/static/icons/hide.svg';
           }
           else {
             input.type = 'text';
-            buttonImg.src = '/static/icons/show.png';
+            input.class = 'form-control';
+            buttonImg.src = '/static/icons/show.svg';
           };
         };
       </script>

@@ -8,7 +8,7 @@ USERS_STATISTICS_DB_NAME: str = "users_statistics_db"
 
 
 def load_db_names() -> None:
-    global INFORMATICS_DB_NAME, USERS_DB_NAME, USERS_STATISTICS_DB_NAME
+    global INFORMATICS_DB_NAME, USERS_DB_NAME, USERS_STATISTICS_DB_NAME, USERS_IDS
     try:
         with open("db_names.txt", "r") as db_names:
             names: list[str] = db_names.readlines()
@@ -23,6 +23,11 @@ def load_db_names() -> None:
         INFORMATICS_DB_NAME = names[0].strip()
         USERS_DB_NAME = names[1].strip()
         USERS_STATISTICS_DB_NAME = names[2].strip()
+        USERS_IDS = {
+            f"{user.username}": user for user in UsersDB(db_name=USERS_DB_NAME).session.query(Users).all()
+        }
+
+
 
 load_db_names()
 

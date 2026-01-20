@@ -19,7 +19,7 @@ def generate_code_from_password(password: str) -> str:
     slider: list[str] = list(printable[72:94])
     min_index: int = 0
     max_index: int = len(alphabet) - 1
-    for char in password:
+    for char in password.strip():
         shift: int = randint(min_index, max_index)
         encrypted.append(f"{shift}{alphabet[(alphabet.index(char) + shift) % len(alphabet)]}{choice(slider)}")
     return "".join(encrypted)
