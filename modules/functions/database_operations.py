@@ -41,7 +41,7 @@ def save_test_question(question_data: dict[str, str | int]) -> bool:
 
 def check_test_variant(variant: list[int], answers: dict[str, list[str]]) -> tuple[dict[str, int], str, dict[str, list[int]]]:
     answers_and_marks: dict[str, int] = {}
-    for_statistics: dict[str, list[int]] = {f"q_type_{num}": [0, 0] for num in range(1, 28)}
+    for_statistics: dict[str, list[int]] = {f"q_type_{num}": [0, 0] for num in range(1, 30 + 1)}
     db_informatics: Query[type[Informatics]] = connect_database_informatics().session.query(Informatics)
     different_problem_types_value: set[Column[Integer] | int] = set()
     q_count: count = count(start=1)
@@ -67,8 +67,11 @@ def check_test_variant(variant: list[int], answers: dict[str, list[str]]) -> tup
             for_statistics[f"q_type_{q_type_number}"] = [common_value + 1, right_value + (points / 2)]
         answers_and_marks.update({q_number_count: points})
 
-    points_value: int = sum(answers_and_marks.values())
+    # It's need for remove questions that don't be in test
+    for_statistics = {q_type: stat for q_type, stat in for_statistics.items() if stat[0]}   #!TODO
 
+    points_value: int = sum(answers_and_marks.values())
+    print(for_statistics)
     return (
         answers_and_marks,
         get_mark_for_test(points_value=points_value, questions_value=len(different_problem_types_value)),

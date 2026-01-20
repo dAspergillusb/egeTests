@@ -128,7 +128,8 @@ class UsersStatisticsDB:
 
     def change_statistics(self, id: int, data_to_change: dict[str, list[int]]) -> None:
         statistics: type[UsersStatistics] = self.session.query(UsersStatistics).get(id)
-        for stat in statistics.to_dict():
+        dict_from_statistics: dict[str, Column[String]] = statistics.to_dict()
+        for stat in dict_from_statistics:
             if data_to_change.get(stat):
                 current_common_value, current_right_value, *_ = map(float, getattr(statistics, stat).split("&"))
                 common_value, right_value = data_to_change.get(stat)

@@ -102,6 +102,7 @@ PROBLEM_TYPE_TO_TIME: dict[int, int] = {
 
 # Translation the primary points to tests points
 CORRECT_ANSWERS_VALUE_TO_POINTS: dict[int, int] = {
+    0: 0,
     1: 7,
     2: 14,
     3: 20,
