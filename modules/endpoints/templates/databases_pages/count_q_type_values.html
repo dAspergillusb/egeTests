@@ -1,0 +1,23 @@
+<h1 class="h3 mb-4 fw-normal" align="middle">Количество заданий в базе данных:</h1>
+    <table class="table table-bordered w-75">
+      <thead>
+        <tr class="table-primary">
+          <th scope="col">Тип задания</th>
+          <th scope="col">Количество заданий</th>
+          <th scope="col">Сложность "база"</th>
+          <th scope="col">Сложность "средний"</th>
+          <th scope="col">Сложность "сложный"</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q_type in count_q_type_values %}
+          <tr>
+            <td>{{ q_type }}</td>
+            <td>{{ count_q_type_values.get(q_type).get("value", 0) }}</td>
+            <td>{{ count_q_type_values.get(q_type).get("Базовый", 0) }}</td>
+            <td>{{ count_q_type_values.get(q_type).get("Средний", 0) }}</td>
+            <td>{{ count_q_type_values.get(q_type).get("Сложный", 0) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>

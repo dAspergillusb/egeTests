@@ -172,5 +172,15 @@ def update_statistics_to_student(user_id: int, statistics: dict[str, list[int]])
     UsersStatisticsDB(db_name=USERS_STATISTICS_DB_NAME).change_statistics(id=user_id, data_to_change=statistics)
 
 
+def get_q_types_values() -> dict[str, dict[str, int]]:
+    q_types_values: dict[str, defaultdict[str, int]] = {f"Тип {num}": defaultdict(int) for num in range(1, 28)}
+    database: list[type[Informatics]] = connect_database_informatics().session.query(Informatics).all()
+    for question in database:
+        q_types_values[f"Тип {question.q_number}"]["value"] += 1
+        q_types_values[f"Тип {question.q_number}"][f"{question.q_difficulty}"] += 1
+
+    return q_types_values
+
+
 if __name__ == '__main__':
     print(get_test_var_one(data_for_test={"q_right_answer": "2", "q_number": 1}))

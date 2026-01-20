@@ -3,7 +3,7 @@ from csv import DictReader, reader
 from fastapi import FastAPI, Request, Form, UploadFile
 from starlette.templating import _TemplateResponse
 from ..models.test_creation_model import TestCreation, ImportCSV
-from ..functions.database_operations import save_test_question
+from ..functions.database_operations import save_test_question, get_q_types_values
 from ..functions.files_operations import save_to_file, create_new_dbs
 from .main_pages import TEMPLATES
 
@@ -18,7 +18,9 @@ def register_creation_pages(app: FastAPI) -> None:
             context={
                 "request": request,
                 "firstname": firstname,
-                "lastname": lastname
+                "lastname": lastname,
+                "q_number": "0",
+                "q_difficulty": "0"
             }
         )
 
@@ -54,7 +56,9 @@ def register_creation_pages(app: FastAPI) -> None:
                 "request": request,
                 "firstname": request.session.get("firstname"),
                 "lastname": request.session.get("lastname"),
-                "mistake_text": is_mistake[True]
+                "mistake_text": is_mistake[True],
+                "q_number": data_for_create.get_q_number(),
+                "q_difficulty": data_for_create.get_q_difficulty()
             }
         )
 
@@ -65,6 +69,17 @@ def register_creation_pages(app: FastAPI) -> None:
             context={
                 "request": request,
                 "mistake": "not",
+            }
+        )
+
+    @app.get("/count_q_type_values")
+    def get_page_count_q_type_values(request: Request) -> _TemplateResponse:
+        count_q_type_values: dict[str, dict[str, int]] = get_q_types_values()
+        return TEMPLATES.TemplateResponse(
+            name="counting_q_type_values.html",
+            context={
+                "request": request,
+                "count_q_type_values": count_q_type_values
             }
         )
 
