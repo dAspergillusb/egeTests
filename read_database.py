@@ -34,8 +34,11 @@ statistics = UsersStatisticsDB().session
 # UsersDB().change_instance(user_id=1, password=generate_code_from_password("(test#user)"))
 # informatics.get(13).q_number = 2
 # informatics.session.commit()
-pprint(users.all())
-pprint(statistics.get(UsersStatistics, 1).to_dict())
+# pprint(users.all())
+# pprint(statistics.get(UsersStatistics, 1).to_dict())
 # pprint(users)
 # pprint(statistics)
 # pprint(statistics[0].to_dict())
+q = informatics.get(233)
+# print(q)
+print([str(q) for q in informatics.all() if q.q_right_answer.startswith("351261")])

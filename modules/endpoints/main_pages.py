@@ -21,7 +21,7 @@ def register_main_endpoints(app: FastAPI) -> None:
     @app.get(path="/", response_model=None)
     def main_page(request: Request) -> _TemplateResponse | RedirectResponse:
         if request.session.get("name"):
-            return RedirectResponse(url="/test")
+            return RedirectResponse(url="/prepare_test")
         return TEMPLATES.TemplateResponse(
             name="sign_in.html",
             context={
