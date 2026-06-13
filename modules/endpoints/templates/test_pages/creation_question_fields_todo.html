@@ -1,0 +1,292 @@
+<div class="container-fluid">
+    <!-- Main content -->
+  <main class="ms-sm-auto col-lg-10 px-md-4">
+    <form method="post" enctype=multipart/form-data>
+      <div id="box" class="w-100">
+        <label class="mb-3 h4">Выберите номер типа вопроса:</label>
+        <select class="form-select mb-5 mt-3" id="q_number" name="q_number">
+            <!--<option selected value="1">1</option>-->
+            {% for i in range(1, 28) %}
+                <option id="{{ i }}" value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+        <div id="fields">
+          <label class="mb-5 h4">Введите содержимое вопроса (задание):</label>
+          <textarea class="ckeditor" id="q_text" name="q_text"></textarea>
+          <div class="mb-5"></div>
+        </div>
+        <hr size="10" color="blue">
+          <div class="d-grid gap-2 d-md-block">
+            <button class="btn btn-secondary py-2 mb-2" data-bs-toggle="modal" value="{{ question_number }}"  name="button" data-bs-target="#status_loading" type="submit">Сохранить вопрос</button>
+          </div>
+      </div>
+    </form>
+    <br>
+    <br>
+    <br>
+    <!--<script src="/static/js/get_q_type_params.js"></script>*-->
+    <script>
+      window.onload = function() {
+        if ('{{ q_number }}' != '0') {
+          var option = document.getElementById('{{ q_number }}');
+          option.selected = true;
+        };
+        if ('{{ q_difficulty }}' != '0') {
+          var difficulty = document.getElementById('{{ q_difficulty }}');
+          difficulty.selected = true;
+        };
+      };
+    </script>
+    <script>
+      const oneAnsQ = [1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 23];
+const oneAnsQFiles = [9, 10, 22, 24];
+const twoAnsQFiles = [17, 18, 26];
+const manyAnsQ = 25;
+const manyAnsQFiles = 27;
+const specialQ = 19;
+
+function removeFields() {
+    var fields = document.getElementById('fields');
+    fields.remove();
+};
+
+function createFields() {
+    var fields = document.createElement('div');
+    fields.id = 'fields';
+
+    var box = document.getElementById('box');
+    box.appendChild(fields);
+};
+
+function createDiffField() {
+    const difficulties = ['Базовый', 'Средний', 'Сложный'];
+    var fields = document.getElementById('fields');
+
+    var label = document.createElement('label');
+    label.className = 'mb-3 h4';
+    label.innerText = 'Выберете сложность для вопроса:';
+    fields.appendChild(label);
+
+    var diff = document.createElement('select');
+    diff.className = 'mb-5 form-select';
+    diff.id = 'q_difficulty';
+    diff.name = 'q_difficulty';
+    fields.appendChild(diff);
+
+    for (let i = 1; i <=3; i++) {
+        var option = document.createElement('option');
+        option.id = difficulties[i - 1];
+        option.value = difficulties[i - 1];
+        option.innerText = difficulties[i - 1];
+        diff.appendChild(option);
+    };
+};
+
+function createTextArea(areaIdName, qType) {
+    var fields = document.getElementById('fields');
+
+    var label = document.createElement('label');
+    label.className = 'mb-5 h4';
+    label.innerText = 'Введите содержимое вопроса (задание ' + qType + '):';
+    fields.appendChild(label);
+
+    var textArea = document.createElement('textarea');
+    textArea.id = areaIdName;
+    textArea.className = 'ckeditor';
+    textArea.name = areaIdName;
+    fields.appendChild(textArea);
+};
+
+function createFiles() {
+    const fielsId = ['file_one', 'file_two', 'file_three', 'file_four'];
+    var fields = document.getElementById('fields');
+
+    var label = document.createElement('label');
+    label.className = 'mb-3 h4';
+    label.innerText = 'Добавьте файлы (один или несколько):';
+    fields.appendChild(label);
+
+    for (let i = 1; i <= 4; i++) {
+        var inputFile = document.createElement('input');
+        inputFile.type = 'file';
+        inputFile.className = 'form-control mb-5 ms-4 mt-3 w-90';
+        inputFile.id = filesId[i];
+        inputFile.name = filesId[i];
+        inputFile.ariaDescribedByElements = 'inputGroupFileAddon04';
+        inputFile.ariaLabel = 'Upload';
+        fields.appenChild(inputFile);
+    };
+};
+
+function createOneAnswer() {
+    var fields = document.getElementById('fields');
+
+    var label = document.createElement('label');
+    label.className = 'mb-3 h4';
+    label.innerText = 'Добавьте правильный ответ:';
+    fields.appendChild(label);
+
+    var input = document.createElement('input');
+    input.className = 'form-control w-75';
+    input.type = 'text';
+    input.name = 'q_right_answer';
+    input.id = 'q_right_answer';
+    input.value = '';
+    fields.appendChild(input);
+};
+
+function createTwoAnswers() {
+    var fields = document.getElementById('fields');
+
+    var label = document.createElement('label');
+    label.className = 'mb-3 h4';
+    label.innerText = 'Добавьте правильные ответы:';
+    fields.appendChild(label);
+
+    var div = document.createElement('div');
+    div.className = 'input-group w-50';
+    fields.appendChild(div);
+
+    for (let i = 1; i <= 2; i++) {
+        var input = document.createElement('input');
+        input.className = 'form-control w-75';
+        input.type = 'text';
+        input.name = 'q_right_answer' + i.toString();
+        input.id = 'q_right_answer' + i.toString();
+        input.value = '';
+        div.appendChild(input);
+    };
+};
+
+function createManyAnswers() {
+    const q_nums = [
+            'q_right_answer_1',
+            'q_right_answer_2',
+            'q_right_answer_3',
+            'q_right_answer_4',
+            'q_right_answer_5',
+            'q_right_answer_6',
+            'q_right_answer_7',
+            'q_right_answer_8',
+            'q_right_answer_9',
+            'q_right_answer_10',
+            'q_right_answer_11',
+            'q_right_answer_12',
+            'q_right_answer_13',
+            'q_right_answer_14',
+            'q_right_answer_15',
+            'q_right_answer_16',
+            'q_right_answer_17',
+            'q_right_answer_18',
+    ];
+    const spanNames = [
+            'Первая пара ответов',
+            'Вторая пара ответов',
+            'Третья пара ответов',
+            'Четвёртая пара ответов',
+            'Пятая пара ответов',
+            'Шестая пара ответов',
+            'Седьмая пара ответов',
+            'Восьмая пара ответов',
+            'Девятая пара ответов'
+    ];
+    var fields = document.getElementById('fields');
+
+    var label = document.createElement('label');
+    label.className = 'mb-3 h4';
+    label.innerText = 'Добавьте правильные ответы:';
+    fields.appendChild(label);
+
+    var qPairNum = 0
+    for (let i = 1; i <= 17; i += 2) {
+        var div = document.createElement('div');
+        div.className = 'input-group w-50';
+        fields.appendChild(div);
+
+        var span = document.createElement('span');
+        span.className = 'input-group-text';
+        span.style.width = '230px';
+        span.innerText = spanNames[qPairNum];
+        div.appendChild(span);
+        qPairNum++;
+
+        for (let j = 0; j <= 1; j++) {
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.ariaLabel = (i + j).toString();
+            input.className = 'form-control';
+            input.id = 'q_right_answer_' + (i + j).toString();
+            input.mane = 'q_right_answer_' + (i + j).toString();
+            div.appendChild(input);
+        };
+    };
+};
+
+function createQTypeFields(selectValue) {
+    var selectElement = document.getElementById('q_number');
+    var selectedIndex = selectElement.selectedIndex;
+    var selectedValue = selectElement.options[selectedIndex].value;
+	console.log('myEditor');
+    removeFields();
+    createFields();
+    createDiffField();
+
+    if (selectValue in oneAnsQ) {
+        createTextArea('q_text', selectValue);
+        createOneAnswer()
+		var Editors = document.querySelectorAll('.ckeditor');
+let myEditor;
+
+window.ClassicEditor
+	.create( Editors, {
+		plugins: [ Essentials, Bold, Italic, Underline, Font, Paragraph, Subscript, Superscript, Code, Heading, List,
+				  Table, TableCellProperties, TableProperties, TableToolbar, Alignment, BlockQuote, SpecialCharacters, SpecialCharactersEssentials,
+				  AutoImage, Autosave, Base64UploadAdapter, ImageBlock, ImageCaption, ImageInline, ImageInsert, ImageInsertViaUrl, ImageResize,
+				  ImageStyle, ImageTextAlternative, ImageToolbar, ImageUpload
+		],
+		toolbar: [
+			'undo', 'redo', '|', 'heading', 'alignment', '|', 'bold', 'italic', 'underline', '|',
+			'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+			'subscript', 'superscript', 'specialCharacters', 'code', '|', 'bulletedList', 'numberedList', '|', 'insertTable', 'insertImage', 'blockQuote'
+		],
+		table: {
+			contentToolbar: [ 'tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties' ]
+		},
+		image: {
+			toolbar: [
+				'toggleImageCaption',
+				'imageTextAlternative',
+				'|',
+				'imageStyle:inline',
+				'imageStyle:wrapText',
+				'imageStyle:breakText',
+				'|',
+				'resizeImage'
+			]
+		}
+	} )
+	.then( ckeditor => (
+		myEditor = ckeditor
+	))
+	.catch( /* ... */ );
+
+    };
+};
+
+    </script>
+    <script>
+      const selectedItem = document.getElementById('q_number');
+
+      selectedItem.addEventListener('change', function() {
+        var selectElement = document.getElementById('q_number');
+        var selectedIndex = selectElement.selectedIndex;
+        var selectedValue = selectElement.options[selectedIndex].value;
+        createQTypeFields(selectedValue);
+        var Editors = document.querySelectorAll('.ckeditor');
+        for (var i = 0; i < Editors.length; i++) {
+          console.log('myEditor');
+        };
+      });
+    </script>
+  </main>
+</div>

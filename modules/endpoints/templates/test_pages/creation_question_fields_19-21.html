@@ -1,0 +1,58 @@
+<div class="container-fluid">
+    <!-- Main content -->
+  <main class="ms-sm-auto col-lg-10 px-md-4">
+    <form method="post" enctype=multipart/form-data>
+      <div id="box" class="w-100">
+      <div id="fields">
+        <label class="mb-3 h4">Выберете сложность для вопроса:</label>
+        <select class="mb-5 form-select" id="q_difficulty" name="q_difficulty" aria-label="Default select example">
+          <option id="Базовый" value="Базовый">Базовый</option>
+          <option id="Средний" value="Средний">Средний</option>
+          <option id="Сложный" value="Сложный">Сложный</option>
+        </select>
+
+        <label class="mb-5 h4">Введите содержимое вопроса (задание 19):</label>
+        <textarea class="ckeditor" id="q_text_19" name="q_text_19"></textarea>
+        <div class="mb-5"></div>
+        <label class="mb-3 h4">Добавьте правильный ответ:</label>
+        <input
+                              type="text"
+                              class="form-control"
+                              name="q_right_answer_19"
+                              id="q_right_answer_19"
+                              value=""
+        >
+        <hr size="10" color="blue">
+        <label class="mb-5 h4">Введите содержимое вопроса (задание 20):</label>
+        <textarea class="ckeditor" id="q_text_20" name="q_text_20"></textarea>
+        <div class="mb-5"></div>
+        <label class="mb-3 h4">Добавьте правильный ответ:</label>
+        <div class="input-group w-50">
+          <input type="text" aria-label="1" class="form-control" name="q_right_answer_20_1" id="q_right_answer_20_1">
+          <input type="text" aria-label="2" class="form-control" name="q_right_answer_20_2" id="q_right_answer_20_2">
+        </div>
+        <hr size="10" color="blue">
+        <label class="mb-5 h4">Введите содержимое вопроса (задание 21):</label>
+        <textarea class="ckeditor" id="q_text_21" name="q_text_21"></textarea>
+        <div class="mb-5"></div>
+        <label class="mb-3 h4">Добавьте правильный ответ:</label>
+        <input
+                              type="text"
+                              class="form-control"
+                              name="q_right_answer_21"
+                              id="q_right_answer_21"
+                              value=""
+        >
+
+        </div>
+        <hr size="10" color="blue">
+          <div class="d-grid gap-2 d-md-block">
+            <button class="btn btn-secondary py-2 mb-2" data-bs-toggle="modal" value="{{ question_number }}"  name="button" data-bs-target="#status_loading" type="submit">Сохранить вопросы</button>
+          </div>
+        </div>
+    </form>
+    <br>
+    <br>
+    <br>
+  </main>
+</div>

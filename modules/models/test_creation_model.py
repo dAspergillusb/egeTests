@@ -54,7 +54,9 @@ class TestCreation(BaseModel):
             all(self.__dict__.get(f"q_right_answer_{num}") for num in range(1, 11)),
             self.q_number in q_many_pairs_answers
         ]):
-            return "&".join([self.__dict__.get(f"q_right_answer_{num}") for num in range(1, 11)])
+            return "&".join([
+                self.__dict__.get(f"q_right_answer_{num}") for num in range(1, 11) if self.__dict__.get(f"q_right_answer_{num}")
+            ])
         return ""
 
     def get_files(self) -> list[UploadFile]:
@@ -73,3 +75,21 @@ class ImportCSV(BaseModel):
     u_db_name: str = "users_db"
     u_stat_db_name: str = "users_statistics_db"
     csv_file: UploadFile = File(...)
+
+class TestCreation1921(BaseModel):
+    q_text_19: str = ""
+    q_text_20: str = ""
+    q_text_21: str = ""
+    q_right_answer_19: str = ""
+    q_right_answer_20_1: str = ""
+    q_right_answer_20_2: str = ""
+    q_right_answer_21: str = ""
+    q_difficulty: str = ""
+
+class DataFromTopic(BaseModel):
+    topic: str = ""
+
+    def get_topic_number(self) -> int:
+        if self.topic:
+            return int(self.topic)
+        return 0

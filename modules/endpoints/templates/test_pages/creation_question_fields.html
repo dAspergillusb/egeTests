@@ -2,7 +2,7 @@
     <!-- Main content -->
   <main class="ms-sm-auto col-lg-10 px-md-4">
     <form method="post" enctype=multipart/form-data>
-      <div class="w-100">
+      <div id="box" class="w-100">
         <label class="mb-3 h4">Выберите номер типа вопроса:</label>
         <select class="form-select mb-5 mt-3" id="q_number" name="q_number">
             <!--<option selected value="1">1</option>-->
@@ -10,7 +10,7 @@
                 <option id="{{ i }}" value="{{ i }}">{{ i }}</option>
             {% endfor %}
         </select>
-
+      <div id="fields">
         <label class="mb-3 h4">Выберете сложность для вопроса:</label>
         <select class="mb-5 form-select" id="q_difficulty" name="q_difficulty" aria-label="Default select example">
           <option id="Базовый" value="Базовый">Базовый</option>
@@ -121,6 +121,7 @@
           <div class="d-grid gap-2 d-md-block">
             <button class="btn btn-secondary py-2 mb-2" data-bs-toggle="modal" value="{{ question_number }}"  name="button" data-bs-target="#status_loading" type="submit">Сохранить вопрос</button>
           </div>
+        </div>
       </div>
     </form>
     <br>
@@ -137,6 +138,13 @@
           difficulty.selected = true;
         };
       };
+    </script>
+    <script>
+      const selectedItem = document.getElementById('q_number');
+
+      selectedItem.addEventListener('change', function() {
+        createQTypeFields(selectedItem.value);
+      });
     </script>
   </main>
 </div>

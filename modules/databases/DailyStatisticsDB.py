@@ -1,4 +1,5 @@
 from typing import Iterator
+from datetime import datetime
 from sqlalchemy import (
     create_engine,
     Engine,
@@ -7,8 +8,7 @@ from sqlalchemy import (
     String,
     Boolean,
     Connection,
-    ARRAY,
-    Tuple
+    ForeignKey
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from random import randint, choice
@@ -19,23 +19,29 @@ BASE = declarative_base()
 class DailyStatistics(BASE):
     __tablename__: str = "daily_statistics"
     id: Column[Integer] = Column(Integer, primary_key=True)
+    user_id: Column[Integer] = Column(Integer)
     firstname: Column[String] = Column(String(100), nullable=False)
     lastname: Column[String] = Column(String(100), nullable=False)
-    school_class: Column[String] = Column(String(4), nullable=False)
     test: Column[String] = Column(String)
+    result: Column[String] = Column(String)
+    date: Column[String] = Column(String, default=datetime.now().isoformat(sep="&", timespec="minutes"))
 
     def __str__(self):
         return (
             f"DailyStatistics(id={self.id},"
             f" Name={self.firstname} {self.lastname},"
-            f" class={self.school_class})"
+            f" Test={self.test},"
+            f" Result={self.result},"
+            f" date={self.date})"
             )
 
     def __repr__(self):
         return (
             f"DailyStatistics(id={self.id},"
             f" Name={self.firstname} {self.lastname},"
-            f" class={self.school_class})"
+            f" Test={self.test},"
+            f" Result={self.result},"
+            f" date={self.date})"
             )
 
 
@@ -60,7 +66,7 @@ class DailyStatisticsDB:
         db_connect: Connection = self.engine.connect()
         return db_connect
 
-    def add_statistics(self, *, statistics_data: dict[str, str]) -> None:
+    def add_statistics(self, *, statistics_data: dict[str, str | int]) -> None:
         statistics: DailyStatistics = DailyStatistics(**statistics_data)
         self.session.add(statistics)
         self.session.commit()
@@ -90,6 +96,6 @@ if __name__ == '__main__':
         "firstname": "Nikita",
         "lastname": "Zelentsov",
         "school_class": "11Z",
-        "test": "$".join(("1", "2", "3", "4"))
+        "test": "&".join(("1", "2", "3", "4"))
     })
     print(DailyStatisticsDB().session.query(DailyStatistics).all()[0].test)

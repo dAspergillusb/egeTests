@@ -122,7 +122,7 @@
 <div class="container-fluid h-90">
   <div class="row">
     <!-- Sidebar Menu -->
-    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapsing collapse h-100" data-bs-toggle="collapse" id="navigation">
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse h-100" data-bs-toggle="collapse" id="navigation">
         <div class="align-items-start">
           <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <button class="nav-link active" id="inf" data-bs-toggle="pill" data-bs-target="#information" type="button" role="tab" aria-controls="information" aria-selected="true">Информация</button>
@@ -162,6 +162,29 @@
           </div>
         </div>
       <br>
+      {% if old_session %}
+      <form action="{{ url_for('test_is_started') }}" methol="get">
+        <button id="showQuestion" hidden data-bs-toggle="modal" data-bs-target="#confirmation" type="button"></button>
+        <div class="modal fade" id="confirmation" tabindex="-1" data-bs-backdrop="static" aria-hidden="false" role="dialog">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="container" align="middle">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="h4 justify-content-center">Похоже, что у вас имеется незаконченный тест</div>
+                            <div class="h4 justify-content-center">Вы хотите продолжить его решение?</div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="container-fluid">
+                                <button class="btn btn-warning" id="finish" type="submit">Да</button>
+                                <button class="btn btn-secondary" onclick="removeSession()" type="button" data-bs-dismiss="modal">Нет</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              </div>
+          </div>
+        </form>
+      {% endif %}
     </main>
   </div>
 </div>
@@ -174,6 +197,22 @@
       inputValue.value = inputRange.value
     });
   </script>
+  {% if old_session %}
+  <script>
+    setTimeout(function() {
+        document.getElementById('showQuestion').click()
+      }, 1000);
+  </script>
+  <script>
+      async function removeSession() {
+        const response = await fetch('{{ url_for("remove_old_test_session") }}', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+      };
+  </script>
+  {% endif %}
   <script src="/static/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

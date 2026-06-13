@@ -5,6 +5,7 @@ from ..databases.UsersDB import Users, UsersDB
 INFORMATICS_DB_NAME: str = "informatics_db"
 USERS_DB_NAME: str = "users_db"
 USERS_STATISTICS_DB_NAME: str = "users_statistics_db"
+DAILY_STATISTICS_DB_NAME: str = "daily_statistics_db"
 
 
 def load_db_names() -> None:
@@ -33,10 +34,10 @@ load_db_names()
 
 print(INFORMATICS_DB_NAME, USERS_DB_NAME, USERS_STATISTICS_DB_NAME)
 
-RANKS: dict[str, str] = {
-    "student": "student",
-    "teacher": "teacher",
-    "admin": "admin"
+RANKS: dict[str | Column[String], str | Column[String]] = {
+    "student": "/prepare_test",
+    "teacher": "/teacher_cabinet",
+    "admin": "/admin_cabinet"
 }
 
 
@@ -138,6 +139,14 @@ CORRECT_ANSWERS_VALUE_TO_POINTS: dict[int, int] = {
     28: 98,
     29: 100,
 }
+
+TOPICS_FOR_TEACHER_CABINET: list[str] = [
+    "Общее количество вопросов",
+    "Просмотр вопросов",
+    "Создание вопросов",
+    "Статистика ученика",
+
+]
 
 # Deprecated
 

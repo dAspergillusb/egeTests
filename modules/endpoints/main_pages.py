@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Annotated, Type
 from fastapi import APIRouter, FastAPI, Request, Form
 from fastapi.responses import RedirectResponse, FileResponse
@@ -5,10 +6,12 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Integer, Column, String
 from starlette.templating import _TemplateResponse
-from ..databases.InformaticsDB import InformaticsDB
+from .config import RANKS, TOPICS_FOR_TEACHER_CABINET
+from ..databases.InformaticsDB import Informatics
 from ..databases.UsersDB import Users
 from ..databases.UsersStatisticsDB import UsersStatistics, UsersStatisticsDB
 from ..functions.security import check_password
+from ..functions.database_operations import get_daily_statistics, get_old_test
 
 
 ROUTER: APIRouter = APIRouter(prefix="/pages", tags=["Frontend"])
@@ -39,9 +42,13 @@ def register_main_endpoints(app: FastAPI) -> None:
         from .config import USERS_IDS
         user: type[Users] | None = USERS_IDS.get(username)
         if_user_mistake: dict[bool, str | RedirectResponse] = {
-            user and check_password(password=password, password_from_db=f"{user.password}"): RedirectResponse("/prepare_test", status_code=302),
+            user and check_password(
+                password=password,
+                password_from_db=f"{user.password}"): RedirectResponse(RANKS.get(user.rank if user else None), status_code=302),
             not user: "Пользователь не найден",
-            not check_password(password=password, password_from_db=f"{user.password}"): "Неправильный пароль",
+            not check_password(
+                password=password,
+                password_from_db=f"{user.password if user else ''}"): "Неправильный пароль",
 
         }
         if isinstance(if_user_mistake.get(True), str):
@@ -61,6 +68,8 @@ def register_main_endpoints(app: FastAPI) -> None:
     @app.get("/student_cabinet")
     def get_student_cabinet(request: Request) -> _TemplateResponse:
         name: str = request.session.get("name")
+        if not name:
+            return RedirectResponse(url="/")
         school_class: str = request.session.get("school_class")
         user_id: int = request.session.get("user_id")
         student_statistics: UsersStatistics = UsersStatisticsDB().session.query(UsersStatistics).get(user_id)
@@ -85,7 +94,8 @@ def register_main_endpoints(app: FastAPI) -> None:
                 0 < accuracy_persent < 40: "Необходимо обратить внимание!",
                 40 <= accuracy_persent < 60: "Необходимо ещё поработать.",
                 60 <= accuracy_persent < 80: "Нормально.",
-                accuracy_persent >= 80: "Всё хорошо."
+                accuracy_persent >= 80: "Всё хорошо.",
+                questions_value <= 10: "Недостаточно данных для статистики"
             }
             conclusions_for_results.append(conclusion_for_result.get(True, "Нет данных"))
             common_values.append(questions_value)
@@ -97,7 +107,7 @@ def register_main_endpoints(app: FastAPI) -> None:
                 )
             )
         common_statistics["absolute_accuracy_persent"] = round(
-            number=common_statistics["absolute_right_answers_value"] * 100 / common_statistics["absolute_questions_value"],
+            number=common_statistics["absolute_right_answers_value"] * 100 / common_statistics["absolute_questions_value"] if common_statistics["absolute_questions_value"] else 0,
             ndigits=3
         )
         absolute_conclusion_for_result: dict[bool, str] = {
@@ -107,6 +117,8 @@ def register_main_endpoints(app: FastAPI) -> None:
             common_statistics["absolute_accuracy_persent"] >= 80: "В целом хорошо."
         }
         common_statistics["result"] = absolute_conclusion_for_result.get(True, "Нет данных")
+
+        daily_statistics: dict[str, defaultdict[str, list[type[Informatics]]]] = get_daily_statistics(user_id=request.session.get("user_id"))
         return TEMPLATES.TemplateResponse(
             name="student_cabinet.html",
             context={
@@ -119,10 +131,48 @@ def register_main_endpoints(app: FastAPI) -> None:
                 "right_answers_values": right_answers_values,
                 "accuracy_persent_values": accuracy_persent_values,
                 "conclusions_for_results": conclusions_for_results,
+                "daily_statistics": daily_statistics,
                 "len": len,
                 "nav_topic": "Личный кабинет"
             }
         )
+
+    @app.get("/teacher_cabinet")
+    def get_teacher_cabinet(request: Request) -> _TemplateResponse:
+        if not request.session.get("name"):
+            return RedirectResponse("/")
+        return TEMPLATES.TemplateResponse(
+            request=request,
+            name="/teacher_cabinet.html",
+            context={
+                "request": request,
+                "name": request.session.get("name"),
+                "topics": enumerate(TOPICS_FOR_TEACHER_CABINET, start=1),
+                "nav_topic": "Кабинет учителя"
+            }
+        )
+
+    @app.get("/admin_cabinet")
+    def get_admin_cabinet() -> _TemplateResponse:
+        pass
+
+    @app.post("/old_test/{date}/{time}")
+    def get_old_test_page(request: Request, date: str, time: str) -> _TemplateResponse:
+        date: str = "&".join((date, time))
+        old_test, old_results = get_old_test(date=date)
+
+        return TEMPLATES.TemplateResponse(
+            name="test_pages/get_old_test.html",
+            context={
+                "request": request,
+                "name": request.session.get("name"),
+                "variant": old_test,
+                "old_results": old_results,
+                "len": len,
+                "nav_topic": "Работа над ошибками"
+            }
+        )
+
 
     @app.get("/files/{problem_num}/{filename}")
     def get_file(problem_num: str, filename: str) -> FileResponse:

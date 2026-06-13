@@ -26,13 +26,14 @@ class Informatics(BASE):
     q_difficulty: Column[String] = Column(String(250))
     q_files: Column[String] = Column(String(250))
     q_right_answer: Column[String] = Column(String(50), nullable=False)
+    q_linked_with: Column[String] = Column(String(), default=None)
 
     def __str__(self):
-        return f"Informatics(\nid={self.id},\nnumber={self.q_number},\nclass={self.q_school_class}\n,answer={self.q_right_answer}\n)\n"
+        return f"Informatics(\nid={self.id},\nnumber={self.q_number},\nclass={self.q_school_class}\n,answer={self.q_right_answer}\n,difficulty={self.q_difficulty})\n"
 
     def __repr__(self):
         return f"Informatics(\nid={self.id},\nq_number={self.q_number},\n" + \
-                f"school_class={self.q_school_class}\n)\n"
+                f"school_class={self.q_school_class}\nfiles={self.q_files}\ndifficulty={self.q_difficulty}\nanswers={self.q_right_answer})\n"
 
     def get_question(self) -> dict[str, Column[String] | Column[Integer]]:
         return {
@@ -42,7 +43,8 @@ class Informatics(BASE):
             "q_text": self.q_text,
             "q_difficulty": self.q_difficulty,
             "q_files": self.q_files,
-            "q_right_answer": self.q_right_answer
+            "q_right_answer": self.q_right_answer,
+            "q_linked_with": self.q_linked_with
         }
 
 
@@ -79,7 +81,8 @@ class InformaticsDB(DataBase):
             q_difficulty=question_data.get("q_difficulty"),
             q_school_class=question_data.get("q_school_class"),
             q_files=question_data.get("q_files"),
-            q_right_answer=question_data.get("q_right_answer")
+            q_right_answer=question_data.get("q_right_answer"),
+            q_linked_with=question_data.get("q_linked_with")
         )
         self.session.add(question)
         self.session.commit()

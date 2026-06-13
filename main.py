@@ -2,6 +2,7 @@ from secrets import token_urlsafe
 from fastapi import FastAPI
 from modules import register_main_endpoints, register_creation_pages, register_tests_pages
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 MAIN: FastAPI = FastAPI()
 
@@ -10,6 +11,13 @@ MAIN.add_middleware(
     secret_key=token_urlsafe(64),
     session_cookie="my_cookies",
     max_age=14 * 24 * 60 * 60
+)
+
+MAIN.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 register_main_endpoints(app=MAIN)

@@ -29,6 +29,8 @@ def check_password(password: str, password_from_db: str) -> bool:
     slider: list[str] = list(printable[72:94])
     dict_to_clear: dict[str, str] = {char: " " for char in slider}
     alphabet: str = printable[:72]
+    if  any(char not in alphabet for char in password):
+        return False
     password_from_db_cleared: list[str] = password_from_db.translate(str.maketrans(dict_to_clear)).split()
     password_to_check: list[str] = []
     for char, group in zip(password, password_from_db_cleared):
@@ -50,3 +52,4 @@ if __name__ == '__main__':
     print(_pass)
     check = check_password(_password, _pass)
     print(check)
+    print(check_password(password="ПРивет", password_from_db="JKEGFUEW"))

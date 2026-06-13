@@ -122,20 +122,26 @@ class UsersDB:
 
 
 if __name__ == '__main__':
-    database = UsersDB(database_path="../../../database")
-    """database.add_instance(
-        firstname="Nik",
-        lastname="Zel",
-        sex="Male",
-        email="pool",
-        school_class="10-A",
-        username="useradminadmin",
-        password="Useradmin1234$"
-    )"""
+    database = UsersDB(database_path="../../database")
+    # user = database.session.query(Users).filter(Users.username == "millerma").first()
+    # print(user)
+    # user.password = generate_code_from_password("3Miller#Maria3")
+    # database.session.commit()
+    # database.session.close()
+    # database.add_instance(
+    #     user_data={
+    #         "firstname": "Мария",
+    #         "lastname": "Миллер",
+    #         "sex": "жен",
+    #         "school_class": "",
+    #         "username": "millerma",
+    #         "password": "3Miller#Maria3",
+    #         "rank": "teacher"
+    # })
     #database.delete_instance(user_id=23)
     #database.change_instance(user_id=22, subject="английский язык")
 
-    for some_user in database.session.query(Users).all():
-        print(f"{some_user.user_id=}::{some_user.username=}::{some_user.firstname=}::{some_user.lastname=}::{some_user.rank=}::{some_user.sex=}::{some_user.password=}::{some_user.school_class=}::{some_user.subject=}::{some_user.email=}")
+    # for some_user in database.session.query(Users).all():
+    #     print(f"{some_user.user_id=}::{some_user.username=}::{some_user.firstname=}::{some_user.lastname=}::{some_user.rank=}::{some_user.sex=}::{some_user.password=}::{some_user.school_class=}")
 
 

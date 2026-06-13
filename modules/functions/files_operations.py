@@ -3,7 +3,7 @@ from fastapi import UploadFile
 from ..functions.security import generate_code_from_password
 from ..databases.UsersDB import Users, UsersDB
 from ..databases.UsersStatisticsDB import UsersStatistics, UsersStatisticsDB
-from ..endpoints.config import load_db_names
+from ..endpoints.config import load_db_names, RANKS
 
 def save_to_file(q_number: str, file: UploadFile) -> str:
     filename_extension: str = file.filename.split(".")[-1]
@@ -39,22 +39,24 @@ def create_new_dbs(
             "sex": sex,
             "school_class": school_class,
             "username": username,
-            "password": generate_code_from_password(password=password)
+            "password": generate_code_from_password(password=password),
+            "rank": rank
         }
-        for firstname, lastname, sex, school_class, username, password in [line.split(";") for line in csv_file.split("\n")][:-1]
+        for firstname, lastname, sex, school_class, username, password, rank in [line.split(";") for line in csv_file.split("\n") if line]
     ]
     new_u_db: UsersDB = UsersDB(db_name=u_db_name)
     new_u_stat_db: UsersStatisticsDB = UsersStatisticsDB(db_name=u_stat_db_name)
     for user_data in data_to_load:
         new_u_db.add_instance(user_data=user_data)
-        new_u_stat_db.add_statistics(
-            statistics_data=
-            {
-                "firstname": user_data["firstname"],
-                "lastname": user_data["lastname"],
-                "school_class": user_data["school_class"]
-            }
-        )
+        if user_data["rank"] not in list(RANKS.keys())[1:]:
+            new_u_stat_db.add_statistics(
+                statistics_data=
+                {
+                    "firstname": user_data["firstname"],
+                    "lastname": user_data["lastname"],
+                    "school_class": user_data["school_class"]
+                }
+            )
     change_db_names(
         u_db_name=u_db_name,
         u_stat_db_name=u_stat_db_name

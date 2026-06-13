@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+  <head>
+    <link rel="stylesheet" href="/static/css/ckeditor5-content.css"/>
+    <script src="/static/js/jquery.min.js"></script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.122.0">
+    <title>Тест</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+
+<link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+
+      .b-example-divider {
+        width: 100%;
+        height: 3rem;
+        background-color: rgba(0, 0, 0, .1);
+        border: solid rgba(0, 0, 0, .15);
+        border-width: 1px 0;
+        box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+      }
+
+      .b-example-vr {
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 100vh;
+      }
+
+      .bi {
+        vertical-align: -.125em;
+        fill: currentColor;
+      }
+
+      .nav-scroller {
+        position: relative;
+        z-index: 2;
+        height: 2.75rem;
+        overflow-y: hidden;
+      }
+
+      .nav-scroller .nav {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+        margin-top: -1px;
+        overflow-x: auto;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .btn-bd-primary {
+        --bd-violet-bg: #712cf9;
+        --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+        --bs-btn-font-weight: 600;
+        --bs-btn-color: var(--bs-white);
+        --bs-btn-bg: var(--bd-violet-bg);
+        --bs-btn-border-color: var(--bd-violet-bg);
+        --bs-btn-hover-color: var(--bs-white);
+        --bs-btn-hover-bg: #6528e0;
+        --bs-btn-hover-border-color: #6528e0;
+        --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+        --bs-btn-active-color: var(--bs-btn-hover-color);
+        --bs-btn-active-bg: #5a23c8;
+        --bs-btn-active-border-color: #5a23c8;
+      }
+
+      .bd-mode-toggle {
+        z-index: 1500;
+      }
+
+      .bd-mode-toggle .dropdown-menu .active .bi {
+        display: block !important;
+      }
+
+      .questions {
+        text-align: center;
+       }
+
+      .question-block {
+        margin-top: 5rem!important;
+        margin-bottom: 1rem!important;
+      }
+
+      .sidebar {
+        height: 80vh;
+      }
+    </style>
+
+    
+    <!-- Custom styles for this template -->
+    <link href="/static/css/sign-in.css" rel="stylesheet">
+  </head>
+  <body>
+
+  {% include "navbar/navbar_top_student.html" %}
+
+<div class="container-fluid h-90">
+    <!-- Main content -->
+    <main class="container-fluid">
+      <!--<form id="test" action="{{ url_for('get_test_results') }}" method="post">-->
+        {% for question_number in variant %}
+          <h1 class="h2 fw-bold">Задание {{ question_number }}</h1>
+          <div class="ck-content question-block">
+            <h1 class="h4 fw-normal lh-base">
+              {{ variant[question_number].q_text | safe }}
+            </h1>
+          </div>
+          {% if variant[question_number].q_files %}
+            <div class="container-fluid">
+            {% for file in variant[question_number].q_files.split("&") %}
+                <a class="mb-2 ms-4 h4" href="{{ url_for('get_file', problem_num=file.split('/')[1], filename=file.split('/')[2]) }}" download>{{ question_number }}.{{ file.split(".")[-1] }}</a>
+            {% endfor %}
+            </div>
+            <br>
+          {% endif %}
+            <div class="form px-2">
+                <p class="h5 ms-5" align="left">Ответ здесь</p>
+                {% if len(variant[question_number].q_right_answer.split("&")) == 1 %}
+                    <input
+                            type="text"
+                            class="form-control mb-5 ms-4 mt-3 w-50"
+                            id="q_{{ question_number }}"
+                            name="q_{{ question_number }}"
+                    >
+                    <button
+                            class="btn btn-outline-primary"
+                            name="button_{{ question_number }}"
+                            onclick="checkAnswer('{{ variant[question_number].id }}', 'q_{{ question_number }}')"
+                            type="button"
+                    >
+                        Проверить ответ
+                    </button>
+
+                    <br>
+                    <hr size="10" color="blue">
+                    <br>
+                {% else %}
+                  {% for num in range(0, len(variant[question_number].q_right_answer.split("&")), 2) %}
+                    <div class="input-group w-50" id="qMany{{ question_number }}">
+                      <input
+                              type="text"
+                              aria-label="{{ num + 1 }}"
+                              class="form-control"
+                              name="q_{{ question_number }}"
+                              id="qMany{{ question_number }}{{ num + 1 }}"
+                      >
+                      <input
+                              type="text"
+                              aria-label="{{ num + 2 }}"
+                              class="form-control"
+                              name="q_{{ question_number }}"
+                              id="qMany{{ question_number }}{{ num + 2 }}"
+                      >
+                    </div>
+                  {% endfor %}
+                    <p class="mb-5"></p>
+                    <button
+                            class="btn btn-outline-primary"
+                            name="button_{{ question_number }}"
+                            onclick="checkAnswer('{{ variant[question_number].id }}', 'q_{{ question_number }}')"
+                            type="button"
+                    >
+                        Проверить ответ
+                    </button>
+                    <br>
+                    <hr size="10" color="blue">
+                    <br>
+                {% endif %}
+            </div>
+        {% endfor %}
+  <!--</form>-->
+    </main>
+  </div>
+<script>
+  $(document).ready(function() {
+    $('table').addClass('table table-bordered table-hover');
+    $('tr').addClass('table-light');
+    $('blockquote').addClass('blockquote vr');
+  });
+</script>
+<br>
+<br>
+</body>
+<script>
+    async function checkAnswer(qId, answer) {
+        var inputNodeList = document.getElementsByName(answer);
+        var answerVariant = Array.from(inputNodeList).map(node => node.value);
+        const response = await fetch('{{ url_for("get_answer") }}', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({q_from_old_test: qId, answer: [...answerVariant]})
+        });
+        if (response.ok) {
+            const result = await response.text();
+            console.log(result);
+
+            var button = document.getElementsByName('button' + answer.slice(1,))
+            if (result == '0') {
+                button[0].className = 'btn btn-danger';
+            } else if (result == '1') {
+                button[0].className = 'btn btn-warning';
+            } else if (result == '2') {
+                button[0].className = 'btn btn-success';
+            };
+        } else {
+
+        };
+        setTimeout(function() {
+            button[0].className = 'btn btn-outline-primary';
+        }, 3000);
+    };
+</script>
+</html>

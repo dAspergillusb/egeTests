@@ -32,7 +32,7 @@ import {
 	    AutoImage,
 	    Autosave,
 	    Base64UploadAdapter
-    } from 'ckeditor5';
+    } from './static/js/ckeditor5';
 
 var Editors = document.querySelectorAll('.ckeditor');
 

@@ -4,6 +4,14 @@
     <link rel="stylesheet" href="/static/css/ckeditor5.css"/>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/ru.umd.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "ckeditor5": "/static/js/ckeditor5.js",
+            "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.3.1/"
+        }
+    }
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
@@ -106,10 +114,14 @@
       }
     </style>
   </head>
-  <body>
+  <body data-editor="ClassicEditor">
 
-  {% include "navbar/navbar_top_teacher_subject.html" %}
-  {% include "test_pages/creation_question_fields.html" %}
+  {% include "navbar/navbar_top_teacher.html" %}
+  {% if nineteen %}
+    {% include "test_pages/creation_question_fields_19-21.html" %}
+  {% else %}
+    {% include "test_pages/creation_question_fields.html" %}
+  {% endif %}
 
   <div class="mb-3"></div>
   <div class="sticky-bottom">
@@ -118,14 +130,7 @@
   {% if mistake_text %}
     {% include "test_pages/modals/is_mistake.html" %}
   {% endif %}
-  <script type="importmap">
-    {
-        "imports": {
-            "ckeditor5": "/static/js/ckeditor5.js",
-            "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.3.1/"
-        }
-    }
-  </script>
+
   <script type="module" src="/static/js/classic.editor.mjs"></script>
   <script src="/static/js/bootstrap.bundle.min.js"></script>
   </body>

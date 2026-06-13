@@ -128,6 +128,7 @@
           <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             <button class="nav-link active" id="com-stat" data-bs-toggle="pill" data-bs-target="#common-statistics" type="button" role="tab" aria-controls="common-statistics" aria-selected="true">Таблица</button>
             <button class="nav-link" id="q-stat" data-bs-toggle="pill" data-bs-target="#questions-statistics" type="button" role="tab" aria-controls="questions-statistics" aria-selected="false">Гистограммы</button>
+            <button class="nav-link" id="tests" data-bs-toggle="pill" data-bs-target="#oldTests" type="button" role="tab" aria-controls="oldTests" aria-selected="false">Мои пройденные тесты</button>
           </div>
         </div>
     </nav>
@@ -139,63 +140,114 @@
             <p class="h4 lh-base mb-2">
               Статистика ученика в виде таблицы:
             </p>
-            <table class="table table-bordered border-dark table-secondary table-hover w-100">
-              <thead>
-                <tr>
-                  <th scope="col">Тип статистики</th>
-                  <th scope="col">Общее число решенных заданий</th>
-                  <th scope="col">Общее число правильных ответов</th>
-                  <th scope="col">Процент выполнения</th>
-                  <th scope="col">Вывод</th>
-                </tr>
-              </thead>
-              <tbody>
-              {% for i in range(len(labels)) %}
-              {% if 0 <= accuracy_persent_values[i] < 40 %}
-              <tr class="table-bordered border-dark table-danger">
-              {% elif 40 <= accuracy_persent_values[i] < 60 %}
-              <tr class="table-bordered border-dark table-warning">
-              {% elif 60 <= accuracy_persent_values[i] < 80 %}
-              <tr class="table-bordered border-dark table-primary">
-              {% else %}
-              <tr class="table-bordered border-dark table-success">
-              {% endif %}
-                  <td>
-                    {{ labels[i] }}
-                  </td>
-                  <td>
-                    {{ common_values[i] }} шт.
-                  </td>
-                  <td>
-                    {{ right_answers_values[i] }} шт.
-                  </td>
-                  <td>
-                    {{ accuracy_persent_values[i] }} %
-                  </td>
-                  <td>
-                    {{ conclusions_for_results[i] }}
-                  </td>
-                </tr>
-              {% endfor %}
-                <tr class="table-bordered border-dark table-info">
-                  <td>
-                    Всего
-                  </td>
-                  <td>
-                    {{ common_statistics.get("absolute_questions_value") }} шт.
-                  </td>
-                  <td>
-                    {{ common_statistics.get("absolute_right_answers_value") }} шт.
-                  </td>
-                  <td>
-                    {{ common_statistics.get("absolute_accuracy_persent") }} %
-                  </td>
-                  <td>
-                    {{ common_statistics.get("result") }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+<!--            <table class="table table-bordered border-dark table-secondary table-hover w-100">-->
+<!--              <thead>-->
+<!--                <tr>-->
+<!--                  <th scope="col">Тип статистики</th>-->
+<!--                  <th scope="col">Общее число решенных заданий</th>-->
+<!--                  <th scope="col">Общее число правильных ответов</th>-->
+<!--                  <th scope="col">Процент выполнения</th>-->
+<!--                  <th scope="col">Вывод</th>-->
+<!--                </tr>-->
+<!--              </thead>-->
+<!--              <tbody>-->
+<!--              {% for i in range(len(labels)) %}-->
+<!--              {% if common_values[i] <= 10 %}-->
+<!--              <tr>-->
+<!--              {% elif 0 <= accuracy_persent_values[i] < 40 %}-->
+<!--              <tr class="table-bordered border-dark table-danger">-->
+<!--              {% elif 40 <= accuracy_persent_values[i] < 60 %}-->
+<!--              <tr class="table-bordered border-dark table-warning">-->
+<!--              {% elif 60 <= accuracy_persent_values[i] < 80 %}-->
+<!--              <tr class="table-bordered border-dark table-primary">-->
+<!--              {% else %}-->
+<!--              <tr class="table-bordered border-dark table-success">-->
+<!--              {% endif %}-->
+<!--                  <td>-->
+<!--                    {{ labels[i] }}-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ common_values[i] }} шт.-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ right_answers_values[i] }} шт.-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ accuracy_persent_values[i] }} %-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ conclusions_for_results[i] }}-->
+<!--                  </td>-->
+<!--                </tr>-->
+<!--              {% endfor %}-->
+<!--                <tr class="table-bordered border-dark table-info">-->
+<!--                  <td>-->
+<!--                    Всего-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ common_statistics.get("absolute_questions_value") }} шт.-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ common_statistics.get("absolute_right_answers_value") }} шт.-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ common_statistics.get("absolute_accuracy_persent") }} %-->
+<!--                  </td>-->
+<!--                  <td>-->
+<!--                    {{ common_statistics.get("result") }}-->
+<!--                  </td>-->
+<!--                </tr>-->
+<!--              </tbody>-->
+<!--            </table>-->
+            <div class="row row-cols-3">
+            {% for i in range(len(labels)) %}
+              <div class="col mb-4">
+                <div class="card">
+                  <canvas id="{{ labels[i] }}" style="display: block; box-sizing: border-box;"></canvas>
+                  <div class="card-body">
+                    <h5 class="card-title">{{ labels[i] }}</h5>
+                    <p class="card-text">
+                      <p>Точность попадания: {{ accuracy_persent_values[i] }}%</p>
+                      <p>Вывод: {{ conclusions_for_results[i] }}</p>
+                    </p>
+                  </div>
+                </div>
+                <script>
+                const data{{ labels[i].split()[-1] }} = {
+                  labels: [
+                    'Количество правильных ответов',
+                    'Количество ошибок'
+                  ],
+                  datasets: [{
+                    data: [{{ right_answers_values[i] }}, {{ common_values[i] - right_answers_values[i] }} ],
+                    backgroundColor: [
+                      'rgb(125, 200, 130)',
+                      'rgb(54, 162, 235)'
+                    ],
+                    hoverOffset: 4
+                  }]
+                };
+                const doughnut{{ labels[i].split()[-1] }} = document.getElementById('{{ labels[i] }}')
+                new Chart(doughnut{{ labels[i].split()[-1] }}, {
+                  type: 'doughnut',
+                  data: data{{ labels[i].split()[-1] }},
+                  options: {
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                      },
+                      title: {
+                        display: true,
+                        text: '{{ labels[i] }}'
+                      }
+                    }
+                  },
+                });
+              </script>
+              </div>
+            {% endfor %}
+            </div>
           </div>
           <div class="tab-pane fade" id="questions-statistics" role="tabpanel" aria-labelledby="q-stat">
             <p class="h4 lh-base mb-2">
@@ -203,6 +255,38 @@
             </p>
             <div style="width:80%;"><canvas id="q-statistics" width="400" height="200" aria-label="questions-type-statistics" role="img"></canvas></div>
             <div style="width:80%;"><canvas id="p-statistics" width="400" height="200" aria-label="questions-type-statistics" role="img"></canvas></div>
+          </div>
+          <div class="tab-pane fade" id="oldTests" role="tabpanel" aria-labelledby="tests">
+            <p class="h4 lh-base mb-2">
+              Список решаемых вами вариантов:
+            </p>
+            <div class="accordion" id="dailyStat">
+              {% for date in daily_statistics %}
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{ date }}" aria-expanded="false" aria-controls="collapseOne">
+                    {{ date }}
+                  </button>
+                </h2>
+                <div id="{{ date }}" class="accordion-collapse collapse" data-bs-parent="#dailyStat">
+                  <div class="accordion-body">
+                    <div class="container-fluid">
+                      {% for hour_min in daily_statistics.get(date) %}
+                      <form action="{{ url_for('get_old_test_page', date=date, time=hour_min) }}" method="post">
+                        <button
+                                formtarget="_blank"
+                                type="submit"
+                                class="btn btn-primary ms-4"
+                                id="{{ hour_min }}"
+                        >{{ hour_min }}</button>
+                      </form>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
       <br>

@@ -124,10 +124,18 @@
     <!-- Sidebar Menu -->
     <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse h-100" data-bs-toggle="collapse" id="navigation">
         <div class="align-items-start">
-          <div class="nav flex-column nav-pills me-3 h-100" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+          <div class="nav nav-tabs flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="horizontal">
             <button class="nav-link active" id="inf" data-bs-toggle="pill" data-bs-target="#information" type="button" role="tab" aria-controls="v-pills-messages" aria-selected="true">Информация</button>
             {% for num in variant %}
-            <button class="nav-link" id="q_{{ num }}" data-bs-toggle="pill" data-bs-target="#question_{{ num }}" type="button" role="tab" aria-controls="v-pills-message" aria-selected="false">Вопрос {{ num }}</button>
+            {% if old_session.get(num) and old_session.get(num) != '0' %}
+            <button class="nav-link fw-bold text-decoration-underline" id="qNav{{ num }}" data-bs-toggle="pill" data-bs-target="#question_{{ num }}" type="button" role="tab" aria-controls="v-pills-message" aria-selected="false">
+                Задание {{ num }}
+            </button>
+            {% else %}
+            <button class="nav-link" id="qNav{{ num }}" data-bs-toggle="pill" data-bs-target="#question_{{ num }}" type="button" role="tab" aria-controls="v-pills-message" aria-selected="false">
+                Задание {{ num }}
+            </button>
+            {% endif %}
             {% endfor %}
           </div>
         </div>
@@ -138,7 +146,7 @@
       <form id="test" action="{{ url_for('get_test_results') }}" method="post">
         <div class="tab-content" id="v-pills-tabContent">
             <div class="tab-pane fade show active" id="information" role="tabpanel" aria-labelledby="v-pills-message-tab">
-              {% include "test_pages/instructions/for_test.html" %}
+              {% include "test_pages/instructions/reference_materials.html" %}
             </div>
             {% for question_number in variant %}
             <div class="tab-pane fade" id="question_{{ question_number }}" role="tabpanel" aria-labelledby="v-pills-message-tab">
@@ -150,7 +158,7 @@
               {% if variant[question_number].q_files %}
                 <div class="container-fluid">
                 {% for file in variant[question_number].q_files.split("&") %}
-                    <a class="mb-2 h4" href="{{ file.replace('//', '/') }}" download>{{ question_number }}.{{ file.split(".")[-1] }}</a>
+                    <a class="mb-2 ms-4 h4" href="{{ file.replace('//', '/') }}" download>{{ question_number }}.{{ file.split(".")[-1] }}</a>
                 {% endfor %}
                 </div>
                 <br>
@@ -158,14 +166,42 @@
                 <div class="form px-2">
                     <p class="h5 ms-5" align="left">Ответ здесь</p>
                     {% if len(variant[question_number].q_right_answer.split("&")) == 1 %}
-                        <input type="text" class="form-control mb-5 ms-4 mt-3 w-50" id="{{ question_number }}" name="q_{{ question_number }}">
+                        <input
+                                type="text"
+                                class="form-control mb-5 ms-4 mt-3 w-50"
+                                id="qOne{{ question_number }}"
+                                name="q_{{ question_number }}"
+                                onchange="isAnswered('qOne{{ question_number }}', 'qNav{{ question_number }}')"
+                                value="{{ old_session.get(question_number) if old_session.get(question_number) and old_session.get(question_number) != '0' else ''}}"
+                        >
+                        <button class="btn btn-outline-primary mb-4" onclick="sendAnswer('q_{{ question_number }}', 'button_{{ question_number }}')" type="button">Сохранить вопрос</button>
+                        <div id="button_{{ question_number }}"></div>
                     {% else %}
                       {% for num in range(0, len(variant[question_number].q_right_answer.split("&")), 2) %}
-                        <div class="input-group w-50">
-                          <input type="text" aria-label="{{ num + 1 }}" class="form-control" name="q_{{ question_number }}" id="q_{{ num + 1 }}">
-                          <input type="text" aria-label="{{ num + 2 }}" class="form-control" name="q_{{ question_number }}" id="q_{{ num + 2 }}">
+                        <div class="input-group w-50" id="qMany{{ question_number }}">
+                          <input
+                                  type="text"
+                                  aria-label="{{ num + 1 }}"
+                                  class="form-control"
+                                  name="q_{{ question_number }}"
+                                  id="qMany{{ question_number }}{{ num + 1 }}"
+                                  onchange="isAnswered('qMany{{ question_number }}{{ num + 1 }}', 'qNav{{ question_number }}')"
+                                  value="{{ old_session.get(question_number).split('$')[num] if old_session.get(question_number) and old_session.get(question_number).split('$')[num] != '0' else '' }}"
+                          >
+                          <input
+                                  type="text"
+                                  aria-label="{{ num + 2 }}"
+                                  class="form-control"
+                                  name="q_{{ question_number }}"
+                                  id="qMany{{ question_number }}{{ num + 2 }}"
+                                  onchange="isAnswered('qMany{{ question_number }}{{ num + 1 }}', 'qNav{{ question_number }}')"
+                                  value="{{ old_session.get(question_number).split('$')[num + 1] if old_session.get(question_number) and old_session.get(question_number).split('$')[num + 1] != '0' else ''}}"
+                          >
                         </div>
                       {% endfor %}
+                        <br>
+                        <button class="btn btn-outline-primary mb-4" onclick="sendAnswer('q_{{ question_number }}', 'button_{{ question_number }}')" type="button">Сохранить вопрос</button>
+                        <div id="button_{{ question_number }}"></div>
                     {% endif %}
                 </div>
             {% if question_number == max_question_number %}
@@ -174,7 +210,6 @@
               <div class="flex-row d-flex justify-content-end">
                 <button
                         class="btn btn-secondary py-2 mb-2"
-                        id="finish"
                         data-bs-toggle="modal"
                         data-bs-target="#confirmation"
                         type="button"
@@ -195,7 +230,7 @@
                         </div>
                         <div class="modal-footer">
                             <div class="container-fluid">
-                                <button class="btn btn-warning" type="submit">Да</button>
+                                <button class="btn btn-warning" id="finish" type="submit">Да</button>
                                 <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Нет</button>
                             </div>
                         </div>
@@ -213,6 +248,15 @@
     $('tr').addClass('table-light');
     $('blockquote').addClass('blockquote vr');
   });
+</script>
+<script>
+    function isAnswered(inputId, problemId) {
+        var input = document.getElementById(inputId);
+        var problem = document.getElementById(problemId);
+        if (input.value == '') {
+            problem.classList.remove('fw-bold', 'text-decoration-underline');
+        };
+    };
 </script>
 <script>
     document.getElementById('test').addEventListener('keydown', function(event) {
@@ -245,5 +289,41 @@
       time--; // С каждой секундой уменьшаем время
   }, 1000); // Интервал делаем одной секунды
 </script>
+<br>
+<br>
 </body>
+  <script src="/static/js/create.alert.save.answer.js"></script>
+<script>
+    async function sendAnswer(inputName, divId) {
+        var inputNodeList = document.getElementsByName(inputName)
+        var inputValue = Array.from(inputNodeList).map(node => node.value)
+        try {
+            const response = await fetch('{{ url_for("get_answer") }}', {
+                method: 'post',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({q_num: inputName, answer: [...inputValue]})
+            });
+            if (response.ok) {
+                const result = await response.text();
+                console.log(result);
+                createAlert(divId, result);
+            } else {
+                createAlert(divId);
+            };
+        } catch (error) {
+           createAlert(divId);
+           console.log(error)
+        };
+        setTimeout(function() {
+            var button = document.getElementById('button');
+            var mainDiv = document.getElementById('mainDiv');
+            if (button) {
+                button.click();
+            };
+            if (mainDiv) {
+                mainDiv.remove();
+            };
+        }, 3000);
+    };
+</script>
 </html>

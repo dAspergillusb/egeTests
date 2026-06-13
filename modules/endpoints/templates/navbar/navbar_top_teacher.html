@@ -1,0 +1,19 @@
+<nav class="navbar navbar-expand-md bg-dark border-bottom border-bottom-dark mb-3 sticky-top" data-bs-theme="dark">
+    <div class="container-fluid">
+      <div class="collapse navbar-collapse" id="subjects">
+        <h1 class="h1 mb-6 fw-normal" style="color: White" align="middle">{{ nav_topic }}</h1>
+      </div>
+      <div class="collapse navbar-collapse justify-content-end dropstart" id="navbarNavDropdown">
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown p-4">
+            <a class="nav-link dropdown-toggle btn btn-primary" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color:white">
+              {{ name }}
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <li><a class="dropdown-item" href="{{ url_for('logout') }}" type="button">Выход</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+</nav>
