@@ -26,6 +26,7 @@ def register_main_endpoints(app: FastAPI) -> None:
         if request.session.get("name"):
             return RedirectResponse(url="/prepare_test")
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="sign_in.html",
             context={
                 "request": request,
@@ -53,6 +54,7 @@ def register_main_endpoints(app: FastAPI) -> None:
         }
         if isinstance(if_user_mistake.get(True), str):
             return TEMPLATES.TemplateResponse(
+                request=request,
                 name="sign_in.html",
                 context={
                     "request": request,
@@ -120,6 +122,7 @@ def register_main_endpoints(app: FastAPI) -> None:
 
         daily_statistics: dict[str, defaultdict[str, list[type[Informatics]]]] = get_daily_statistics(user_id=request.session.get("user_id"))
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="student_cabinet.html",
             context={
                 "request": request,
@@ -162,6 +165,7 @@ def register_main_endpoints(app: FastAPI) -> None:
         old_test, old_results = get_old_test(date=date)
 
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="test_pages/get_old_test.html",
             context={
                 "request": request,

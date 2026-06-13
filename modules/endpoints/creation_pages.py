@@ -29,6 +29,7 @@ def register_creation_pages(app: FastAPI) -> None:
         request.session["firstname"] = firstname
         request.session["lastname"] = lastname
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/creation_question.html",
             context={
                 "request": request,
@@ -67,6 +68,7 @@ def register_creation_pages(app: FastAPI) -> None:
             not saved: ("Ошибка!", "Проверьте правильно ли заполнена форма.")
         }
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/creation_question.html",
             context={
                 "request": request,
@@ -84,6 +86,7 @@ def register_creation_pages(app: FastAPI) -> None:
         request.session["firstname"] = firstname
         request.session["lastname"] = lastname
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/creation_question.html",
             context={
                 "request": request,
@@ -132,6 +135,7 @@ def register_creation_pages(app: FastAPI) -> None:
         request.session["firstname"] = firstname
         request.session["lastname"] = lastname
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/creation_question.html",
             context={
                 "request": request,
@@ -146,6 +150,7 @@ def register_creation_pages(app: FastAPI) -> None:
     @app.get("/import_from_csv")
     def get_page_import_from_csv(request: Request) -> _TemplateResponse:
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="import_from_csv.html",
             context={
                 "request": request,
@@ -158,6 +163,7 @@ def register_creation_pages(app: FastAPI) -> None:
     def get_page_count_q_type_values(request: Request) -> _TemplateResponse:
         count_q_type_values: dict[str, dict[str, int]] = get_q_types_values()
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="counting_q_type_values.html",
             context={
                 "request": request,
@@ -189,6 +195,7 @@ def register_creation_pages(app: FastAPI) -> None:
         }
         # print([item for item in reader(data_to_load.csv_file.file.read().decode("utf-8"), delimiter=";")])
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="import_from_csv.html",
             context={
                 "request": request,
@@ -205,6 +212,7 @@ def register_creation_pages(app: FastAPI) -> None:
             lastname: str
     ) -> _TemplateResponse:
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="to_html_tags.html",
             context={
                 "request": request,

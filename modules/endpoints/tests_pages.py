@@ -59,6 +59,7 @@ def register_tests_pages(app: FastAPI) -> None:
         # informatics: dict[Column[Integer], Type[Informatics]] = get_test_var()
         # request.session["informatics_variant"] = "&".join(f"{informatics[question].id}" for question in informatics)
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/choose_test_type.html",
             context={
                 "request": request,
@@ -91,6 +92,7 @@ def register_tests_pages(app: FastAPI) -> None:
         request.session["informatics_variant"] = "&".join(f"{informatics[question].id}" for question in informatics)
         pprint([name, [(informatics[x].id, informatics[x].q_right_answer) for x in informatics]])
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/generated_test_rewrite.html",
             context={
                 "request": request,
@@ -112,6 +114,7 @@ def register_tests_pages(app: FastAPI) -> None:
         informatics: dict[Column[Integer], type[Informatics]] = get_test_var_exam()
         request.session["informatics_variant"] = "&".join(f"{informatics[question].id}" for question in informatics)
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/generated_test.html",
             context={
                 "request": request,
@@ -161,6 +164,7 @@ def register_tests_pages(app: FastAPI) -> None:
 
         print(request.session.get("old_test_session"))
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/generated_test_started_rewrite.html", #"/test_pages/generated_test_started_rewrite.html",
             context={
                 "request": request,
@@ -276,6 +280,7 @@ def register_tests_pages(app: FastAPI) -> None:
             request.session.pop("start_test")
         pprint([name, mark.split("&")])
         return TEMPLATES.TemplateResponse(
+            request=request,
             name="/test_pages/testing_result.html",
             context={
                 "request": request,
