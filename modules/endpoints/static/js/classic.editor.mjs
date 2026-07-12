@@ -39,7 +39,7 @@ let editorInstance = ['editorInstance', 'editorInstanceTwo', 'editorInstanceThre
 //let editorInstanceThree = 'editorInstanceThree';
 
 function createClassinEditor(textArea, index) {
-};
+}
 
 function loadCKEditor(textArea, index) {
 	ClassicEditor
@@ -72,6 +72,6 @@ function loadCKEditor(textArea, index) {
 			} )
 			.then( editor => { window[editorInstance[index]] = editor; } )
 			.catch( error => { console.log(error); } );
-};
+}
 
 window.loadCKEditor = loadCKEditor;
