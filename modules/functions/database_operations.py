@@ -10,7 +10,7 @@ from urllib3 import request
 
 from ..databases.InformaticsDB import Informatics, InformaticsDB
 from ..databases.DailyStatisticsDB import DailyStatistics, DailyStatisticsDB
-from ..databases.UsersStatisticsDB import UsersStatisticsDB
+from ..databases.UsersStatisticsDB import UsersStatisticsDB, UsersStatistics
 from ..databases.ActiveStudentsTest import ActiveStudentsTest, ActiveStudentsTestDB
 from ..endpoints.config import CORRECT_ANSWERS_VALUE_TO_POINTS
 from ..endpoints.config import INFORMATICS_DB_NAME, USERS_STATISTICS_DB_NAME, DAILY_STATISTICS_DB_NAME
@@ -43,11 +43,30 @@ def connect_active_test_session() -> ActiveStudentsTestDB:
 
 def save_test_question(question_data: dict[str, str | int] | dict[int, dict[str, int | str]]) -> bool:
     # print(question_data)
+    duplicate: bool = any((
+        connect_database_informatics().session.query(Informatics).filter(Informatics.q_text == question_data.get("q_text")).first(),
+        connect_database_informatics().session.query(Informatics).filter(
+            Informatics.q_text == question_data.get(19, {'q_text': ''}).get('q_text')
+        ).first(),
+    ))
+    if duplicate:
+        return False
     if question_data.get("q_text") and question_data.get("q_right_answer"):
         database: InformaticsDB = connect_database_informatics()
         database.add_question(question_data=question_data)
         return True
-    elif question_data.get(19) and question_data.get(20) and question_data.get(21):
+    elif (
+            question_data.get(19) and
+            question_data.get(20) and
+            question_data.get(21) and
+            all((
+            question_data.get(19).get("q_text"),
+            question_data.get(20).get("q_text"),
+            question_data.get(21).get("q_text"),
+            question_data.get(19).get("q_right_answer"),
+            question_data.get(20).get("q_right_answer"),
+            question_data.get(21).get("q_right_answer")))
+    ):
         database: InformaticsDB = connect_database_informatics()
         database.add_question(question_data=question_data.get(20))
         database.add_question(question_data=question_data.get(21))
@@ -286,6 +305,14 @@ def save_answer_for_session(session_id: int, q_num: str, answer: str) -> bool:
 def update_statistics_to_student(user_id: int, statistics: dict[str, list[int]]) -> None:
     UsersStatisticsDB(db_name=USERS_STATISTICS_DB_NAME).change_statistics(id=user_id, data_to_change=statistics)
 
+def get_statistics_for_students() -> list[tuple[str, dict[str, list[float]]]]:
+    user_statistics: list[type[UsersStatistics]] = UsersStatisticsDB().session.query(UsersStatistics).all()
+    common_statistics: list[tuple[str, dict[str, list[float]]]] = [
+        (f"{user.firstname} {user.lastname}",
+         {f"Тип {_type.split('_')[-1]}": list(map(float, stat.split("&"))) for _type, stat in user.to_dict().items()
+        }) for user in user_statistics
+    ]
+    return common_statistics
 
 def get_q_types_values() -> dict[str, dict[str, int]]:
     datas: list[str] = ["value", "Базовый", "Средний", "Сложный"]
@@ -296,6 +323,15 @@ def get_q_types_values() -> dict[str, dict[str, int]]:
         q_types_values[f"Тип {question.q_number}"][f"{question.q_difficulty}"] += 1
 
     return q_types_values
+
+
+def get_all_questions_for_type(q_type: str) -> list[type[Informatics]]:
+    if q_type == "19":
+        return connect_database_informatics().session.query(Informatics).filter(
+            Informatics.q_number > 18,
+            Informatics.q_number < 22
+        ).all()
+    return connect_database_informatics().session.query(Informatics).filter(Informatics.q_number == int(q_type)).all()
 
 
 if __name__ == '__main__':
