@@ -4,7 +4,7 @@ function createMainDiv() {
 	mainDiv.className = 'position-fixed bottom-0 end-0 p-3';
 	mainDiv.Style = 'z-index:11';
 	return mainDiv;
-};
+}
 
 function createDivAlert(result, qNavId) {
 	var divAlert = document.createElement('div');
@@ -24,7 +24,7 @@ function createDivAlert(result, qNavId) {
 	} else {
 	    divAlert.textContent = 'Что-то пошло не так! Попробуйте попозже.';
 	    divAlert.className += ' alert-danger';
-	};
+	}
 	divAlertButton.type = 'button';
 	divAlertButton.id = 'button';
 	divAlertButton.className = 'btn-close';
@@ -32,7 +32,7 @@ function createDivAlert(result, qNavId) {
 	divAlertButton.setAttribute('aria-label', 'Закрыть');
 	divAlert.appendChild(divAlertButton);
 	return divAlert;
-};
+}
 
 function createAlert(divId, result) {
 	var div = document.getElementById(divId);
@@ -40,4 +40,4 @@ function createAlert(divId, result) {
 	var divAlert = createDivAlert(result, divId.split('_').slice(-1));
 	divMain.appendChild(divAlert);
 	div.appendChild(divMain);
-};
+}
