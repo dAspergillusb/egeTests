@@ -5,10 +5,10 @@ from fastapi import UploadFile, File
 class TestCreation(BaseModel):
     q_number: str = ""
     q_text: str = ""
-    file_one: UploadFile = File(...)
-    file_two: UploadFile = File(...)
-    file_three: UploadFile = File(...)
-    file_four: UploadFile = File(...)
+    file_one: UploadFile = None #File(...)
+    file_two: UploadFile = None #File(...)
+    file_three: UploadFile = None #File(...)
+    file_four: UploadFile = None #File(...)
     q_right_answer: str = ""
     q_right_answer_1: str = ""
     q_right_answer_2: str = ""
@@ -20,6 +20,14 @@ class TestCreation(BaseModel):
     q_right_answer_8: str = ""
     q_right_answer_9: str = ""
     q_right_answer_10: str = ""
+    q_right_answer_11: str = ""
+    q_right_answer_12: str = ""
+    q_right_answer_13: str = ""
+    q_right_answer_14: str = ""
+    q_right_answer_15: str = ""
+    q_right_answer_16: str = ""
+    q_right_answer_17: str = ""
+    q_right_answer_18: str = ""
     q_difficulty: str = ""
 
     def get_q_number(self) -> str:
@@ -66,7 +74,7 @@ class TestCreation(BaseModel):
                 self.file_two,
                 self.file_three,
                 self.file_four
-            ] if file.filename
+            ] if file
         ]
 
 
@@ -92,4 +100,12 @@ class DataFromTopic(BaseModel):
     def get_topic_number(self) -> int:
         if self.topic:
             return int(self.topic)
+        return 0
+
+class QuestionTypeNeeded(BaseModel):
+    q_type: str = ""
+
+    def get_q_type(self) -> int:
+        if self.q_type:
+            return int(self.q_type)
         return 0
