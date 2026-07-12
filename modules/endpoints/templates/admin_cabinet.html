@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+  <head>
+    <link rel="stylesheet" href="/static/css/ckeditor5.css"/>
+    <link rel="stylesheet" href="/static/css/ckeditor5-content.css"/>
+    <script src="/static/js/jquery.min.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "ckeditor5": "/static/js/ckeditor5.js",
+            "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.3.1/"
+        }
+    }
+    </script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.122.0">
+    <title>Кабинет учитлея</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+
+<link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+
+      .b-example-divider {
+        width: 100%;
+        height: 3rem;
+        background-color: rgba(0, 0, 0, .1);
+        border: solid rgba(0, 0, 0, .15);
+        border-width: 1px 0;
+        box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+      }
+
+      .b-example-vr {
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 100vh;
+      }
+
+      .bi {
+        vertical-align: -.125em;
+        fill: currentColor;
+      }
+
+      .nav-scroller {
+        position: relative;
+        z-index: 2;
+        height: 2.75rem;
+        overflow-y: hidden;
+      }
+
+      .nav-scroller .nav {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+        margin-top: -1px;
+        overflow-x: auto;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .btn-bd-primary {
+        --bd-violet-bg: #712cf9;
+        --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+        --bs-btn-font-weight: 600;
+        --bs-btn-color: var(--bs-white);
+        --bs-btn-bg: var(--bd-violet-bg);
+        --bs-btn-border-color: var(--bd-violet-bg);
+        --bs-btn-hover-color: var(--bs-white);
+        --bs-btn-hover-bg: #6528e0;
+        --bs-btn-hover-border-color: #6528e0;
+        --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+        --bs-btn-active-color: var(--bs-btn-hover-color);
+        --bs-btn-active-bg: #5a23c8;
+        --bs-btn-active-border-color: #5a23c8;
+      }
+
+      .bd-mode-toggle {
+        z-index: 1500;
+      }
+
+      .bd-mode-toggle .dropdown-menu .active .bi {
+        display: block !important;
+      }
+
+      .questions {
+        text-align: center;
+       }
+
+      .question-block {
+        margin-top: 5rem!important;
+        margin-bottom: 5rem!important;
+      }
+
+      .sidebar {
+        height: 80vh;
+      }
+    </style>
+
+
+    <!-- Custom styles for this template -->
+    <link href="/static/css/sign-in.css" rel="stylesheet">
+  </head>
+  <body>
+
+  {% include "navbar/navbar_top_teacher.html" %}
+
+<div class="container-fluid h-90">
+  <div class="row">
+    <!-- Sidebar Menu -->
+    <nav class="col-md-3 col-lg-1 d-md-block sidebar collapse collapse-horizontal position-fixed start-0" style="width: 150px;" data-bs-toggle="collapse" id="navigation">
+        <div class="align-items-start" style="max-height: 90vh; min-height: 300px">
+            <div class="overflow-auto mb-2" style="max-height: 75vh;">
+                <div class="btn-group-vertical mb-4 bg-light" role="group" aria-label="">
+                  {% for num, topic in topics %}
+                    <button id="{{ num }}" name="navButton" type="button" class="btn btn-outline-primary" onclick="getDataFromTopic('{{ num }}')">
+                      {{ topic }}
+                    </button>
+                  {% endfor %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+
+        <div class="container-fluid w-100" id="forData">
+
+        </div>
+    </main>
+  </div>
+</div>
+  <script>
+    async function getDataFromTopic(topicNum) {
+      try {
+        const response = await fetch('{{ url_for("get_data_from_topic") }}', {
+          method: 'post',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({topic: topicNum})
+        });
+        if (response.ok) {
+          const result = await response.json();
+          // console.log(result);
+          createStructure(result);
+          const navButtons = document.querySelectorAll('[name="navButton"]');
+          navButtons.forEach(navButton => {
+              navButton.classList.replace('btn-primary', 'btn-outline-primary');
+          });
+          const chosenNavElement = document.querySelector(`[id="${topicNum}"]`);
+          chosenNavElement.classList.replace('btn-outline-primary', 'btn-primary');
+        }
+      }  catch (error) {
+        console.log(error);
+      }
+    }
+  </script>
+  <script>
+      async function getDataToSave(qNumber) {
+        const form = document.getElementById('form');
+        const formData = new FormData(form);
+        formData.set('q_text', window.editorInstance.getData());
+        formData.set('q_number', qNumber);
+        try {
+            const response = await fetch('{{ url_for("create_question") }}', {
+                method: 'post',
+                body: formData
+            });
+            if (response.ok) {
+                const result = await response.json();
+                // console.log(result);
+                createAlert(result);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+      }
+  </script>
+  <script>
+      async function getDataToSave1921() {
+          const form = document.getElementById('form');
+          const formData = new FormData(form);
+          formData.set('q_text_19', window.editorInstance.getData());
+          formData.set('q_text_20', window.editorInstanceTwo.getData());
+          formData.set('q_text_21', window.editorInstanceThree.getData());
+          try {
+              const response = await fetch('{{ url_for("create_question_19_21") }}', {
+                  method: 'post',
+                  body: formData
+              });
+              if (response.ok) {
+                  const result = await response.json();
+                  // console.log(result);
+                  createAlert(result);
+              }
+          } catch (error) {
+              console.log(error);
+          }
+      }
+  </script>
+  <script>
+      async function getTypeQuestions(qType) {
+        try {
+            const response = await fetch('{{ url_for("get_all_type_questions") }}', {
+                method: 'post',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({q_type: qType})
+            });
+            if (response.ok) {
+                const result = await response.json();
+                // console.log(Array.isArray(result));
+                if (qType == '19') {
+                   getSpecialQuestions(result);
+                } else {
+                   getStandardQuestions(result);
+                }
+                // console.log(qType);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+      }
+  </script>
+  <script type="module" src="/static/js/classic.editor.mjs"></script>
+  <script src="/static/js/get.data.from.topic.teacher.js"></script>
+  <script src="/static/js/get_q_type_params.js"></script>
+  <script src="/static/js/create.alert.save.question.js"></script>
+  <script src="/static/js/get.q.type.questions.js"></script>
+  <script src="/static/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
