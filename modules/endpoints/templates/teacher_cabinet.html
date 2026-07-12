@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="auto">
   <head>
     <link rel="stylesheet" href="/static/css/ckeditor5.css"/>
-    <script src="/static/js/chart.js"></script>
+    <link rel="stylesheet" href="/static/css/ckeditor5-content.css"/>
     <script src="/static/js/jquery.min.js"></script>
     <script type="importmap">
     {
@@ -17,10 +17,10 @@
     <meta name="description" content="">
     <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
     <meta name="generator" content="Hugo 0.122.0">
-    <title>Подготовка к тесту</title>
+    <title>Кабинет учитлея</title>
 
-<!--    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">-->
-<!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">-->
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
 
 <link href="/static/css/bootstrap.min.css" rel="stylesheet">
 
@@ -131,6 +131,9 @@
         <div class="align-items-start" style="max-height: 90vh; min-height: 300px">
             <div class="overflow-auto mb-2" style="max-height: 75vh;">
                 <div class="btn-group-vertical mb-4 bg-light" role="group" aria-label="">
+                    <button id="0" name="navIns" type="button" class="btn btn-primary" onclick="hideShowIns()">
+                        Инструкция
+                    </button>
                   {% for num, topic in topics %}
                     <button id="{{ num }}" name="navButton" type="button" class="btn btn-outline-primary" onclick="getDataFromTopic('{{ num }}')">
                       {{ topic }}
@@ -143,6 +146,26 @@
 
     <!-- Main content -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <div id="instruction">
+            <h4 class="h4 fw-bold">Что может делать учитель:</h4>
+            <p class="h5 lh-base">
+                &nbsp;- просмотреть общее количество вопросов в базе данных и количество вопросов разной
+                сложности по каждому типу задания;
+            </p>
+            <p class="h5 lh-base">
+                
+            </p>
+            <p class="h5 lh-base">
+                &nbsp;- просмотреть сами вопросы по типу задания;
+            </p>
+            <p class="h5 lh-base">
+                &nbsp;- создать задание определённого типа;
+            </p>
+            <p class="h5 lh-base">
+                &nbsp;- просмотреть статистику учеников по каждому типу задания;
+            </p>
+
+        </div>
         <div class="container-fluid w-100" id="forData">
 
         </div>
@@ -159,17 +182,108 @@
         });
         if (response.ok) {
           const result = await response.json();
-          console.log(result);
+          // console.log(result);
           createStructure(result);
-        };
+          document.getElementById('0').classList.replace('btn-primary', 'btn-outline-primary');
+          document.getElementById('instruction').hidden = true;
+          const navButtons = document.querySelectorAll('[name="navButton"]');
+          navButtons.forEach(navButton => {
+              navButton.classList.replace('btn-primary', 'btn-outline-primary');
+          });
+          const chosenNavElement = document.querySelector(`[id="${topicNum}"]`);
+          chosenNavElement.classList.replace('btn-outline-primary', 'btn-primary');
+        }
       }  catch (error) {
         console.log(error);
-      };
-    };
+      }
+    }
+  </script>
+  <script>
+      async function getDataToSave(qNumber) {
+        const form = document.getElementById('form');
+        const formData = new FormData(form);
+        formData.set('q_text', window.editorInstance.getData());
+        formData.set('q_number', qNumber);
+        try {
+            const response = await fetch('{{ url_for("create_question") }}', {
+                method: 'post',
+                body: formData
+            });
+            if (response.ok) {
+                const result = await response.json();
+                // console.log(result);
+                createAlert(result);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+      }
+  </script>
+  <script>
+      async function getDataToSave1921() {
+          const form = document.getElementById('form');
+          const formData = new FormData(form);
+          formData.set('q_text_19', window.editorInstance.getData());
+          formData.set('q_text_20', window.editorInstanceTwo.getData());
+          formData.set('q_text_21', window.editorInstanceThree.getData());
+          try {
+              const response = await fetch('{{ url_for("create_question_19_21") }}', {
+                  method: 'post',
+                  body: formData
+              });
+              if (response.ok) {
+                  const result = await response.json();
+                  // console.log(result);
+                  createAlert(result);
+              }
+          } catch (error) {
+              console.log(error);
+          }
+      }
+  </script>
+  <script>
+      async function getTypeQuestions(qType) {
+        try {
+            const response = await fetch('{{ url_for("get_all_type_questions") }}', {
+                method: 'post',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({q_type: qType})
+            });
+            if (response.ok) {
+                const result = await response.json();
+                // console.log(Array.isArray(result));
+                if (qType == '19') {
+                   getSpecialQuestions(result);
+                } else {
+                   getStandardQuestions(result);
+                }
+                // console.log(qType);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+      }
+  </script>
+  <script>
+      function hideShowIns() {
+          const insButton = document.getElementById('0');
+          const insDiv = document.getElementById('instruction');
+          if (!insButton.className.includes('outline')) {
+              insDiv.hidden = true;
+              insButton.classList.replace('btn-primary', 'btn-outline-primary');
+          } else if (insButton.className.includes('outline')) {
+              insButton.classList.replace('btn-outline-primary', 'btn-primary');
+              insDiv.hidden = false;
+              document.getElementById('forData').replaceChildren();
+          }
+          document.querySelector('.btn-primary[name="navButton"]').classList.replace('btn-primary', 'btn-outline-primary');
+      }
   </script>
   <script type="module" src="/static/js/classic.editor.mjs"></script>
   <script src="/static/js/get.data.from.topic.teacher.js"></script>
   <script src="/static/js/get_q_type_params.js"></script>
+  <script src="/static/js/create.alert.save.question.js"></script>
+  <script src="/static/js/get.q.type.questions.js"></script>
   <script src="/static/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
