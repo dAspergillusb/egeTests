@@ -9,16 +9,16 @@ function showHideInf(elementId) {
 	} else {
 		inf.hidden = true;
 		infButton.className = 'btn btn-outline-primary';
-	};
+	}
 	buttons = document.querySelectorAll('[name="navButton"]');
 	for (const button of buttons) {
-		if(button.id == elementId) {
+		if (button.id == elementId) {
 			button.className = button.className.replace('btn-outline-primary', 'btn-primary');
 		} else {
 			button.className = button.className.replace('btn-primary', 'btn-outline-primary');
-		};
-	};
- };
+		}
+	}
+ }
 	  
 function putQuestionData(questionData) {
 	mainDiv = document.getElementById('main');
@@ -32,7 +32,7 @@ function putQuestionData(questionData) {
 	mainDiv.appendChild(putAlertDiv(questionData.q_number));
 	if (questionData.answers.split(":").at(-1) != "0") {
 		changeButtonToSaved();
-	};
+	}
 	
 	var inputs = document.querySelectorAll(`[name="q_${questionData.q_number}"]`);
 	var saveButton = document.querySelector('[name="saveAnswerButton"]');
@@ -43,7 +43,7 @@ function putQuestionData(questionData) {
 			saveButton.className = 'btn btn-outline-primary mb-4';
 		});
 	});
-};
+}
 
 function putQuestionText(qText) {
 	var qTextDiv = document.createElement('div');
@@ -55,7 +55,7 @@ function putQuestionText(qText) {
 	
 	qTextDiv.appendChild(qTextH);
 	return qTextDiv;
-};
+}
 
 function putQuestionFiles(qNum, qFiles) {
 	var qFilesDiv = document.createElement('div');
@@ -65,7 +65,7 @@ function putQuestionFiles(qNum, qFiles) {
 	if (qNum == 27) {
 		var types = ['A', 'B'];
 		var type_index = 0;
-	};
+	}
 	
 	for (const file of qFiles.split('&')) {
 		var qFilesA = document.createElement('a');
@@ -78,11 +78,11 @@ function putQuestionFiles(qNum, qFiles) {
 			type_index++;
 		} else {
 			qFilesA.innerHTML = `${qNum}.${end}`;
-		};
+		}
 		qFilesDiv.appendChild(qFilesA);
-	};
+	}
 	return qFilesDiv;
-};
+}
 
 function putQuestionAnswers(qNum, answersValue, oldAnswers) {
 	var qDiv = document.createElement('div');
@@ -109,7 +109,7 @@ function putQuestionAnswers(qNum, answersValue, oldAnswers) {
 			answerInput.value = answer;
 		} else {
 			answerInput.value = '';
-		};
+		}
 		qDiv.appendChild(answerInput);
 	} else {
 		var answers = answer.split('$');
@@ -128,7 +128,7 @@ function putQuestionAnswers(qNum, answersValue, oldAnswers) {
 				inputOne.value = answers.at(i);
 			} else {
 				inputOne.value = '';
-			};
+			}
 			
 			var inputTwo = document.createElement('input');
 			inputTwo.type = 'text';
@@ -140,14 +140,14 @@ function putQuestionAnswers(qNum, answersValue, oldAnswers) {
 				inputTwo.value = answers.at(i + 1);
 			} else {
 				inputTwo.value = '';
-			};
+			}
 			inputDiv.appendChild(inputOne);
 			inputDiv.appendChild(inputTwo);
 			qDiv.appendChild(inputDiv);
-		};
-	};
+		}
+	}
 	return qDiv;
-};
+}
 
 function putSaveAnswerButton(qNum) {
 	var saveButton = document.createElement('button');
@@ -158,14 +158,14 @@ function putSaveAnswerButton(qNum) {
 	saveButton.setAttribute('type', 'button');
 	saveButton.innerHTML = 'Сохранить ответ';
 	return saveButton;
-};
+}
 
 function putAlertDiv(qNum) {
 	var alertDiv = document.createElement('div');
 	
 	alertDiv.setAttribute('id', `button_${qNum}`);
 	return alertDiv;
-};
+}
 
 function changeButtonToSaved() {
 	var saveButton = document.querySelector('[name="saveAnswerButton"]');
@@ -173,4 +173,4 @@ function changeButtonToSaved() {
 	saveButton.innerHTML = 'Ответ сохранён';
 	saveButton.className = 'btn btn-outline-success mb-4';
 	saveButton.setAttribute('disabled', '');
-};
+}
