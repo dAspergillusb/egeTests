@@ -1,7 +1,15 @@
 from fastapi import FastAPI, Request, Form, UploadFile
 from starlette.templating import _TemplateResponse
-from ..models.test_creation_model import TestCreation, ImportCSV, TestCreation1921, DataFromTopic
-from ..functions.database_operations import save_test_question, get_q_types_values
+from ..databases.InformaticsDB import Informatics
+from ..models.test_creation_model import (TestCreation,
+                                          ImportCSV,
+                                          TestCreation1921,
+                                          DataFromTopic,
+                                          QuestionTypeNeeded)
+from ..functions.database_operations import (save_test_question,
+                                             get_q_types_values,
+                                             get_all_questions_for_type,
+                                             get_statistics_for_students)
 from ..functions.files_operations import save_to_file, create_new_dbs
 from .main_pages import TEMPLATES
 
@@ -12,7 +20,7 @@ def register_creation_pages(app: FastAPI) -> None:
             request: Request,
             topic: DataFromTopic
     ):
-        topic_number = topic.get_topic_number()
+        topic_number: int = topic.get_topic_number()
         match topic_number:
             case 1:
                 return 1, get_q_types_values()
@@ -21,39 +29,44 @@ def register_creation_pages(app: FastAPI) -> None:
             case 3:
                 return 3, 3
             case 4:
-                return 4
+                return 4, sorted(get_statistics_for_students(), key=lambda user: user[0])
         return 0
 
-    @app.get("/test_constructor")
-    def test_constructor(request: Request, firstname: str, lastname: str) -> _TemplateResponse:
-        request.session["firstname"] = firstname
-        request.session["lastname"] = lastname
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="/test_pages/creation_question.html",
-            context={
-                "request": request,
-                "firstname": firstname,
-                "lastname": lastname,
-                "q_number": "0",
-                "q_difficulty": "0",
-                "nav_topic": "Конструтор вопросов"
-            }
-        )
+    @app.post("/get_all_q_types")
+    async def get_all_type_questions(
+            request: Request,
+            q_type: QuestionTypeNeeded):
+        return get_all_questions_for_type(q_type=q_type.q_type)
+
+    # @app.get("/test_constructor")
+    # def test_constructor(request: Request, firstname: str, lastname: str) -> _TemplateResponse:
+    #     request.session["firstname"] = firstname
+    #     request.session["lastname"] = lastname
+    #     return TEMPLATES.TemplateResponse(
+    #         request=request,
+    #         name="/test_pages/creation_question.html",
+    #         context={
+    #             "request": request,
+    #             "firstname": firstname,
+    #             "lastname": lastname,
+    #             "q_number": "0",
+    #             "q_difficulty": "0",
+    #             "nav_topic": "Конструтор вопросов"
+    #         }
+    #     )
 
     @app.post("/test_constructor")
-    def create_question(
+    async def create_question(
             request: Request,
             data_for_create: TestCreation = Form(...),
-    ) -> _TemplateResponse:
-        # print(data_for_create)
+    ) -> bool:
         file_paths: list[str] = [
             save_to_file(
                 q_number=data_for_create.get_q_number(),
                 file=file
             ) for file in data_for_create.get_files()
         ]
-        saved: bool = save_test_question(
+        return save_test_question(
             question_data={
                 "q_number": data_for_create.get_q_number(),
                 "q_text": data_for_create.get_q_text(),
@@ -63,47 +76,28 @@ def register_creation_pages(app: FastAPI) -> None:
                 "q_right_answer": data_for_create.get_answers()
             }
         )
-        is_mistake: dict[bool, tuple[str, str]] = {
-            saved: ("Успех!", "Вопрос успешно сохранён!"),
-            not saved: ("Ошибка!", "Проверьте правильно ли заполнена форма.")
-        }
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="/test_pages/creation_question.html",
-            context={
-                "request": request,
-                "firstname": request.session.get("firstname"),
-                "lastname": request.session.get("lastname"),
-                "mistake_text": is_mistake[True],
-                "q_number": data_for_create.get_q_number(),
-                "q_difficulty": data_for_create.get_q_difficulty(),
-                "nav_topic": "Конструтор вопросов"
-            }
-        )
 
-    @app.get("/test_constructor_19-21")
-    def test_constructor_19_21(request: Request, firstname: str, lastname: str) -> _TemplateResponse:
-        request.session["firstname"] = firstname
-        request.session["lastname"] = lastname
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="/test_pages/creation_question.html",
-            context={
-                "request": request,
-                "firstname": firstname,
-                "lastname": lastname,
-                "nineteen": True,
-                "nav_topic": "Конструтор вопросов"
-            }
-        )
+    # @app.get("/test_constructor_19-21")
+    # def test_constructor_19_21(request: Request, firstname: str, lastname: str) -> _TemplateResponse:
+    #     request.session["firstname"] = firstname
+    #     request.session["lastname"] = lastname
+    #     return TEMPLATES.TemplateResponse(
+    #         request=request,
+    #         name="/test_pages/creation_question.html",
+    #         context={
+    #             "request": request,
+    #             "firstname": firstname,
+    #             "lastname": lastname,
+    #             "nineteen": True,
+    #             "nav_topic": "Конструтор вопросов"
+    #         }
+    #     )
 
     @app.post("/test_constructor_19-21")
-    def create_question_19_21(
+    async def create_question_19_21(
             request: Request,
-            firstname: str,
-            lastname: str,
             data_for_create: TestCreation1921 = Form(...)
-    ) -> _TemplateResponse:
+    ) -> bool:
         saved = {
             19: {
                 "q_number": 19,
@@ -130,22 +124,7 @@ def register_creation_pages(app: FastAPI) -> None:
                 "q_right_answer": data_for_create.q_right_answer_21
             }
         }
-        save_test_question(question_data=saved)
-
-        request.session["firstname"] = firstname
-        request.session["lastname"] = lastname
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="/test_pages/creation_question.html",
-            context={
-                "request": request,
-                "firstname": firstname,
-                "lastname": lastname,
-                "nineteen": True,
-                "nav_topic": "Конструтор вопросов"
-            }
-        )
-
+        return save_test_question(question_data=saved)
 
     @app.get("/import_from_csv")
     def get_page_import_from_csv(request: Request) -> _TemplateResponse:
