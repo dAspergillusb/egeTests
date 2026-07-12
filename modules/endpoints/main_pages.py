@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Integer, Column, String
 from starlette.templating import _TemplateResponse
-from .config import RANKS, TOPICS_FOR_TEACHER_CABINET
+from .config import RANKS, TOPICS_FOR_TEACHER_CABINET, TOPICS_FOR_ADMIN_CABINET
 from ..databases.InformaticsDB import Informatics
 from ..databases.UsersDB import Users
 from ..databases.UsersStatisticsDB import UsersStatistics, UsersStatisticsDB
@@ -39,7 +39,7 @@ def register_main_endpoints(app: FastAPI) -> None:
             request: Request,
             username: Annotated[str, Form()],
             password: Annotated[str, Form()]
-    ) -> _TemplateResponse | RedirectResponse:
+    ) -> _TemplateResponse | RedirectResponse | str:
         from .config import USERS_IDS
         user: type[Users] | None = USERS_IDS.get(username)
         if_user_mistake: dict[bool, str | RedirectResponse] = {
@@ -49,8 +49,7 @@ def register_main_endpoints(app: FastAPI) -> None:
             not user: "Пользователь не найден",
             not check_password(
                 password=password,
-                password_from_db=f"{user.password if user else ''}"): "Неправильный пароль",
-
+                password_from_db=f"{user.password if user else ''}"): "Неправильный пароль"
         }
         if isinstance(if_user_mistake.get(True), str):
             return TEMPLATES.TemplateResponse(
@@ -74,7 +73,7 @@ def register_main_endpoints(app: FastAPI) -> None:
             return RedirectResponse(url="/")
         school_class: str = request.session.get("school_class")
         user_id: int = request.session.get("user_id")
-        student_statistics: UsersStatistics = UsersStatisticsDB().session.query(UsersStatistics).get(user_id)
+        student_statistics: type[UsersStatistics] | None = UsersStatisticsDB().session.query(UsersStatistics).get(user_id)
         common_statistics: dict[str, float | str] = {
             "absolute_questions_value": 0.0,
             "absolute_right_answers_value": 0.0,
@@ -156,8 +155,17 @@ def register_main_endpoints(app: FastAPI) -> None:
         )
 
     @app.get("/admin_cabinet")
-    def get_admin_cabinet() -> _TemplateResponse:
-        pass
+    def get_admin_cabinet(request: Request) -> _TemplateResponse:
+        return TEMPLATES.TemplateResponse(
+            request=request,
+            name="/admin_cabinet.html",
+            context={
+                "request": request,
+                "name": request.session.get("name"),
+                "topics": enumerate(TOPICS_FOR_ADMIN_CABINET, start=1),
+                "nav_topic": "Кабинет администратора"
+            }
+        )
 
     @app.post("/old_test/{date}/{time}")
     def get_old_test_page(request: Request, date: str, time: str) -> _TemplateResponse:
