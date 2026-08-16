@@ -30,7 +30,7 @@ function putQuestionData(questionData) {
 	mainDiv.appendChild(putQuestionAnswers(questionData.q_number, questionData.q_right_answer, questionData.answers));
 	mainDiv.appendChild(putSaveAnswerButton(questionData.q_number));
 	mainDiv.appendChild(putAlertDiv(questionData.q_number));
-	if (questionData.answers.split(":").at(-1) != "0") {
+	if (questionData.answers != '0') {
 		changeButtonToSaved();
 	}
 	
@@ -95,7 +95,7 @@ function putQuestionAnswers(qNum, answersValue, oldAnswers) {
 	
 	qDiv.appendChild(infText);
 	
-	var answer = oldAnswers.split(':').at(-1);
+	var answer = oldAnswers;
 	if (answersValue == 1) {
 		var answerInput = document.createElement('input');
 		
