@@ -30,8 +30,8 @@ class TestCreation(BaseModel):
     q_right_answer_18: str = ""
     q_difficulty: str = ""
 
-    def get_q_number(self) -> str:
-        return self.q_number
+    def get_q_number(self) -> int:
+        return int(self.q_number)
 
     def get_q_text(self) -> str:
         return self.q_text
@@ -74,7 +74,7 @@ class TestCreation(BaseModel):
                 self.file_two,
                 self.file_three,
                 self.file_four
-            ] if file
+            ] if file and file.filename
         ]
 
 
@@ -85,6 +85,7 @@ class ImportCSV(BaseModel):
     csv_file: UploadFile = File(...)
 
 class TestCreation1921(BaseModel):
+    q_number: str = ""
     q_text_19: str = ""
     q_text_20: str = ""
     q_text_21: str = ""
@@ -109,3 +110,9 @@ class QuestionTypeNeeded(BaseModel):
         if self.q_type:
             return int(self.q_type)
         return 0
+
+class QuestionIdToChangeRemove(BaseModel):
+    q_id: str = ""
+
+    def get_q_id(self) -> int:
+        return int(self.q_id)
