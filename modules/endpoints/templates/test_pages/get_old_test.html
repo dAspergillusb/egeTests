@@ -117,12 +117,18 @@
   </head>
   <body>
 
-  {% include "navbar/navbar_top_student.html" %}
+  {% if rank == 'student' %}
+    {% include "navbar/navbar_top_student.html" %}
+  {% elif rank == 'teacher' %}
+    {% include "navbar/navbar_top_teacher.html" %}
+  {% else %}
+    {% include "navbar/navbar_top_admin.html" %}
+  {% endif %}
 
 <div class="container-fluid h-90">
     <!-- Main content -->
     <main class="container-fluid">
-      <!--<form id="test" action="{{ url_for('get_test_results') }}" method="post">-->
+      <!--<form q_id="test" action="{{ url_for('get_test_results') }}" method="post">-->
         {% for question_number in variant %}
           <h1 class="h2 fw-bold">Задание {{ question_number }}</h1>
           <div class="ck-content question-block">
@@ -150,7 +156,7 @@
                     <button
                             class="btn btn-outline-primary"
                             name="button_{{ question_number }}"
-                            onclick="checkAnswer('{{ variant[question_number].id }}', 'q_{{ question_number }}')"
+                            onclick="checkAnswer('{{ variant[question_number].q_id }}', 'q_{{ question_number }}')"
                             type="button"
                     >
                         Проверить ответ
@@ -182,7 +188,7 @@
                     <button
                             class="btn btn-outline-primary"
                             name="button_{{ question_number }}"
-                            onclick="checkAnswer('{{ variant[question_number].id }}', 'q_{{ question_number }}')"
+                            onclick="checkAnswer('{{ variant[question_number].q_id }}', 'q_{{ question_number }}')"
                             type="button"
                     >
                         Проверить ответ
