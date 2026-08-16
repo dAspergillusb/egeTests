@@ -1,3 +1,19 @@
+function refreshForm() {
+	let inputs = document.querySelectorAll('input[type="text"], input[type="file"]');
+	inputs.forEach(input => {
+		input.value = '';
+	});
+	if (window.editorInstance) {
+		window.editorInstance.setData('');
+	}
+	if (window.editorInstanceTwo) {
+		window.editorInstanceTwo.setData('');
+	}
+	if (window.editorInstanceThree) {
+		window.editorInstanceThree.setData('');
+	}
+}
+
 function createMainDiv() {
 	var mainDiv = document.createElement('div');
 	mainDiv.id = 'mainDiv';
@@ -15,6 +31,7 @@ function createDivAlert(result) {
 	if (result) {
 	    divAlert.textContent = 'Ваш вопрос успешно сохранён!';
 	    divAlert.className += ' alert-success';
+		refreshForm();
 	} else if (!result) {
 	    divAlert.textContent = 'В форме есть ошибки или такой вопрос есть в базе!';
 	    divAlert.className += ' alert-warning';
