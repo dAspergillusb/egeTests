@@ -2,3 +2,9 @@ fastapi[standard]
 python-multipart
 itsdangerous
 sqlalchemy
+asyncpg
+greenlet
+aiofiles
+python-dotenv
+pyjwt
+passlib
