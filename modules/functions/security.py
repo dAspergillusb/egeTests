@@ -1,17 +1,9 @@
+from datetime import datetime, timedelta, timezone
 from string import printable
 from random import randint, choice
-from fastapi import Depends
-from fastapi.security import APIKeyHeader
-
-API_KEY: APIKeyHeader = APIKeyHeader(name="X-key")
-FAKE_KEYS: set[str] = {"security", "secret"}
-
-
-def get_api_key(key: str = Depends(API_KEY)) -> str:
-    if key in FAKE_KEYS:
-        return "False"
-    return key
-
+from typing import Optional, Any
+from jwt import encode as jwt_encode
+from ..endpoints.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 def generate_code_from_password(password: str) -> str:
     encrypted: list[str] = []
@@ -29,7 +21,7 @@ def check_password(password: str, password_from_db: str) -> bool:
     slider: list[str] = list(printable[72:94])
     dict_to_clear: dict[str, str] = {char: " " for char in slider}
     alphabet: str = printable[:72]
-    if  any(char not in alphabet for char in password):
+    if any(char not in alphabet for char in password):
         return False
     password_from_db_cleared: list[str] = password_from_db.translate(str.maketrans(dict_to_clear)).split()
     password_to_check: list[str] = []
@@ -42,6 +34,16 @@ def check_password(password: str, password_from_db: str) -> bool:
         shift: int = int("".join(cache))
         password_to_check.append(f"{shift}{alphabet[(alphabet.index(char) + shift) % len(alphabet)]}")
     return password_to_check == password_from_db_cleared
+
+def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+    to_encode: dict[str, Any] = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=float(ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    to_encode["exp"] = expire
+    return jwt_encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 if __name__ == '__main__':
