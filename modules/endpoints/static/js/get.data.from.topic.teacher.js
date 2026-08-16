@@ -1,12 +1,12 @@
 function createStructure(data) {
-	var mainDiv = document.getElementById('forData');
+	let mainDiv = document.getElementById('forData');
 	mainDiv.replaceChildren();
 	
 	const topic = data[0];
 	
 	switch (topic) {
 		case 1:
-			var table = createTableQuestionsCount(data[1]);
+			let table = createTableQuestionsCount(data[1]);
 			mainDiv.appendChild(table[0]);
 			mainDiv.appendChild(table[1]);
 			break;
@@ -18,10 +18,10 @@ function createStructure(data) {
 			mainDiv.appendChild(questionsList);
 			break;
 		case 3:
-			var createQuestions = createNavBarForTypes();
+			let createQuestions = createNavBarForTypes();
 			//console.log(createQuestions);
 			mainDiv.appendChild(createQuestions);
-			var fields = document.createElement('div');
+			let fields = document.createElement('div');
 			fields.setAttribute('id', 'fields');
 			mainDiv.appendChild(fields);
 			break;
@@ -68,17 +68,17 @@ function createTableQuestionsCount(data) {
 	
 	table.appendChild(tHead);
 	tHead.appendChild(tTr);
-	
-	var types = new Map(Object.entries(data));
-	for (type of types) {
-		var tTr = document.createElement('tr');
-		var tTd = document.createElement('td');
-		tTd.innerHTML = type.at(0);
+
+	let types = new Map(Object.entries(data));
+	for (let qType of types) {
+		let tTr = document.createElement('tr');
+		let tTd = document.createElement('td');
+		tTd.innerHTML = qType.at(0);
 		tTr.appendChild(tTd);
 		
-		var items = new Map(Object.entries(type.at(1)));
+		let items = new Map(Object.entries(qType.at(1)));
 		items.forEach(item => {
-			var tTd = document.createElement('td');
+			let tTd = document.createElement('td');
 			tTd.innerHTML = item;
 			tTr.appendChild(tTd);
 		});
@@ -103,7 +103,7 @@ function createNavBarForTypes(func = 'createQTypeFields') {
 	];
 	
 	var nav = document.createElement('div');
-	nav.className = 'd-flex align-items-center mb-4';
+	nav.className = 'd-flex overflow-x-auto align-items-center mb-4';
 	nav.setAttribute('style', 'max-width: 90vw; min-width: 300px');
 	var overflow = document.createElement('div');
 	overflow.ClassName = 'overflow-auto';
