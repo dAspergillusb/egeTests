@@ -25,6 +25,11 @@
 <link href="/static/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+        /* Optional: Hide scrollbar for a cleaner look */
+       .overflow-x-auto::-webkit-scrollbar {
+         display: none;
+       }
+
       .bd-placeholder-img {
         font-size: 1.125rem;
         text-anchor: middle;
@@ -122,12 +127,16 @@
   </head>
   <body>
 
-  {% include "navbar/navbar_top_teacher.html" %}
+  {% if rank == 'admin' %}
+    {% include "navbar/navbar_top_admin.html" %}
+  {% elif rank == 'teacher' %}
+    {% include "navbar/navbar_top_teacher.html" %}
+  {% endif %}
 
 <div class="container-fluid h-90">
   <div class="row">
     <!-- Sidebar Menu -->
-    <nav class="col-md-3 col-lg-1 d-md-block sidebar collapse collapse-horizontal position-fixed start-0" style="width: 150px;" data-bs-toggle="collapse" id="navigation">
+    <nav class="col-md-3 col-lg-1 d-md-block sidebar collapse collapse-horizontal position-fixed start-0" style="width: 150px; z-index: 1;" data-bs-toggle="collapse" id="navigation">
         <div class="align-items-start" style="max-height: 90vh; min-height: 300px">
             <div class="overflow-auto mb-2" style="max-height: 75vh;">
                 <div class="btn-group-vertical mb-4 bg-light" role="group" aria-label="">
@@ -153,7 +162,7 @@
                 сложности по каждому типу задания;
             </p>
             <p class="h5 lh-base">
-                
+
             </p>
             <p class="h5 lh-base">
                 &nbsp;- просмотреть сами вопросы по типу задания;
@@ -197,8 +206,7 @@
         console.log(error);
       }
     }
-  </script>
-  <script>
+
       async function getDataToSave(qNumber) {
         const form = document.getElementById('form');
         const formData = new FormData(form);
@@ -213,13 +221,13 @@
                 const result = await response.json();
                 // console.log(result);
                 createAlert(result);
+
             }
         } catch (error) {
             console.log(error);
         }
       }
-  </script>
-  <script>
+
       async function getDataToSave1921() {
           const form = document.getElementById('form');
           const formData = new FormData(form);
@@ -240,8 +248,7 @@
               console.log(error);
           }
       }
-  </script>
-  <script>
+
       async function getTypeQuestions(qType) {
         try {
             const response = await fetch('{{ url_for("get_all_type_questions") }}', {
@@ -252,7 +259,7 @@
             if (response.ok) {
                 const result = await response.json();
                 // console.log(Array.isArray(result));
-                if (qType == '19') {
+                if (qType === '19') {
                    getSpecialQuestions(result);
                 } else {
                    getStandardQuestions(result);
@@ -263,8 +270,7 @@
             console.log(error);
         }
       }
-  </script>
-  <script>
+
       function hideShowIns() {
           const insButton = document.getElementById('0');
           const insDiv = document.getElementById('instruction');
@@ -277,6 +283,110 @@
               document.getElementById('forData').replaceChildren();
           }
           document.querySelector('.btn-primary[name="navButton"]').classList.replace('btn-primary', 'btn-outline-primary');
+      }
+
+      async function removeQuestion(qId) {
+          try {
+              const response = await fetch('{{ url_for("remove_question") }}', {
+                  method: 'delete',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({q_id: qId})
+              });
+              if (response.status === 204) {
+                  let toDelete = document.querySelectorAll(`div[name="${qId}"]`);
+                  toDelete.forEach(remove => {
+                      remove.remove();
+                  });
+                  document.querySelector(`div[name="content${qId}"]`).remove();
+                  document.querySelector(`hr[name="${qId}"]`).remove();
+              }
+          } catch (error) {
+              console.log(error);
+          }
+      }
+
+      async function changeQuestion(qId, buttonSave, buttonCancel, buttonChange) {
+          buttonChange.innerHTML = '';
+          const spanSpinner = document.createElement('span');
+          spanSpinner.setAttribute('class', 'spinner-border spinner-border-sm');
+          spanSpinner.setAttribute('aria-hidden', 'true');
+          const spanText = document.createElement('span');
+          spanText.setAttribute('role', 'status');
+          spanText.innerText = 'Загружаю...';
+          buttonChange.appendChild(spanSpinner);
+          buttonChange.appendChild(spanText);
+          try {
+              const response = await fetch('{{ url_for("get_question") }}', {
+                  method: 'post',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({q_id: qId})
+              });
+              if (response.ok) {
+                  const result = await response.json();
+                  createFieldsForChangeQuestion(result, buttonSave, buttonChange);
+                  console.log(result);
+                  buttonChange.replaceChildren();
+                  buttonChange.innerHTML = 'Изменить';
+                  let buttonsChange = document.querySelectorAll('button[name="edit"]');
+                  let buttonsRemove = document.querySelectorAll('button[name="remove"]');
+                  [...buttonsChange, ...buttonsRemove].forEach(button => {
+                      button.disabled = true;
+                  });
+                  buttonSave.disabled = false;
+                  buttonCancel.disabled = false;
+              }
+          } catch (error) {
+              console.log(error);
+          }
+      }
+
+      async function saveQuestion(qId, buttonSave, buttonCancel) {
+          buttonSave.innerHTML = '';
+          const spanSpinner = document.createElement('span');
+          spanSpinner.setAttribute('class', 'spinner-border spinner-border-sm');
+          spanSpinner.setAttribute('aria-hidden', 'true');
+          const spanText = document.createElement('span');
+          spanText.setAttribute('role', 'status');
+          spanText.innerText = 'Сохраняю...';
+          buttonSave.appendChild(spanSpinner);
+          buttonSave.appendChild(spanText);
+          const form = document.getElementById('form');
+          const formData = new FormData(form);
+          if (window.editorInstanceTwo) {
+              formData.set('q_text_19', window.editorInstance.getData());
+              formData.set('q_text_20', window.editorInstanceTwo.getData());
+              formData.set('q_text_21', window.editorInstanceThree.getData());
+          } else {
+              formData.set('q_text', window.editorInstance.getData());
+          }
+          try {
+              const response = await fetch(`/questions/${qId}`, {
+                  method: 'post',
+                  body: formData
+              });
+              if (response.ok) {
+                  const result = await response.json();
+                  console.log(result);
+                  let fields = document.querySelector('div[id="fields"]');
+                  fields.remove();
+                  if (result.length === 1) {
+                      getStandardQuestions(result, false);
+                  } else {
+                      getSpecialQuestions(result, false);
+                  }
+                  buttonSave.replaceChildren();
+                  buttonSave.innerHTML = 'Сохранить';
+                  buttonSave.disabled = true;
+                  buttonCancel.disabled = true;
+                  let buttonsChange = document.querySelectorAll('button[name="edit"]');
+                  let buttonsRemove = document.querySelectorAll('button[name="remove"]');
+                  [...buttonsChange, ...buttonsRemove].forEach(button => {
+                      button.disabled = false;
+                  });
+              }
+          } catch (error) {
+              console.log(error);
+          }
       }
   </script>
   <script type="module" src="/static/js/classic.editor.mjs"></script>
