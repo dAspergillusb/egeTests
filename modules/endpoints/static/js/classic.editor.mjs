@@ -41,7 +41,7 @@ let editorInstance = ['editorInstance', 'editorInstanceTwo', 'editorInstanceThre
 function createClassinEditor(textArea, index) {
 }
 
-function loadCKEditor(textArea, index) {
+function loadCKEditor(textArea, index, data) {
 	ClassicEditor
 			.create( textArea, {
 				plugins: [ Essentials, Bold, Italic, Underline, Font, Paragraph, Subscript, Superscript, Code, Heading, List,
@@ -70,7 +70,10 @@ function loadCKEditor(textArea, index) {
 					]
 				}
 			} )
-			.then( editor => { window[editorInstance[index]] = editor; } )
+			.then( editor => {
+                window[editorInstance[index]] = editor;
+                window[editorInstance[index]].setData(data);
+            } )
 			.catch( error => { console.log(error); } );
 }
 
