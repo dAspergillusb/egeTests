@@ -1,49 +1,37 @@
+import os
+from os import getenv
+from dotenv import load_dotenv, get_key
+from typing import Optional
+from ..models.env_model import EnvSettings
 from sqlalchemy import Column, String
-from ..databases.UsersDB import Users, UsersDB
-
-# Import db-names from file. What in db we want to work.
-INFORMATICS_DB_NAME: str = "informatics_db"
-USERS_DB_NAME: str = "users_db"
-USERS_STATISTICS_DB_NAME: str = "users_statistics_db"
-DAILY_STATISTICS_DB_NAME: str = "daily_statistics_db"
+from sqlalchemy.orm import Mapped
 
 
-def load_db_names() -> None:
-    global INFORMATICS_DB_NAME, USERS_DB_NAME, USERS_STATISTICS_DB_NAME, USERS_IDS
-    try:
-        with open("db_names.txt", "r") as db_names:
-            names: list[str] = db_names.readlines()
-    except FileNotFoundError:
-        with open("db_names.txt", "w") as db_names:
-            db_names.write(
-                "informatics_db\nusers_db\nusers_statistics_db"
-            )
-        with open("db_names.txt", "r") as db_names:
-            names: list[str] = db_names.readlines()
-    finally:
-        INFORMATICS_DB_NAME = names[0].strip()
-        USERS_DB_NAME = names[1].strip()
-        USERS_STATISTICS_DB_NAME = names[2].strip()
-        USERS_IDS = {
-            f"{user.username}": user for user in UsersDB(db_name=USERS_DB_NAME).session.query(Users).all()
-        }
+# loading DB parameters
+env_settings: EnvSettings = EnvSettings()
+DB_HOST: str = env_settings.DB_HOST
+DB_PORT: str = env_settings.DB_PORT
+DB_USER: str = env_settings.DB_USER
+DB_PASSWORD: str = env_settings.DB_PASSWORD
+DB_URL_PART: str = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/"
+SECRET_KEY: str = env_settings.SECRET_KEY
+ALGORITHM: str = env_settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES: str = env_settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
+# Import db-names from file. What's db-name that we want to work.
+# MAIN_DB_USERS_NAME = env_settings.MAIN_DB_USERS_NAME
+# MAIN_DB_INFORMATICS_NAME = env_settings.MAIN_DB_INFORMATICS_NAME
+# MAIN_DB_ARCHIVE_NAME = env_settings.MAIN_DB_ARCHIVE_NAME
+ARCHIVE_DB_NAME = env_settings.ARCHIVE_DB_NAME
+INFORMATICS_DB_NAME = env_settings.INFORMATICS_DB_NAME
+USERS_DB_NAME = env_settings.USERS_DB_NAME
+USERS_STATISTICS_DB_NAME = env_settings.USERS_STATISTICS_DB_NAME
+DAILY_STATISTICS_DB_NAME = env_settings.DAILY_STATISTICS_DB_NAME
+ACTIVE_STUDENTS_TEST_DB_NAME = env_settings.ACTIVE_STUDENTS_TEST_DB_NAME
+INITIATED_DBS = env_settings.INITIATED_DBS
 
-
-load_db_names()
-
-print(INFORMATICS_DB_NAME, USERS_DB_NAME, USERS_STATISTICS_DB_NAME)
-
-RANKS: dict[str | Column[String], str | Column[String]] = {
-    "student": "/prepare_test",
-    "teacher": "/teacher_cabinet",
-    "admin": "/admin_cabinet"
-}
-
-
-USERS_IDS: dict[str, type[Users]] = {
-    f"{user.username}": user for user in UsersDB(db_name=USERS_DB_NAME).session.query(Users).all()
-}
+# in production or at server type this property on True
+SECURED: bool = False
 
 TOPICS_FOR_PROBLEM_TYPES: list[str] = [
     "1. Анализ информационных моделей",
@@ -149,7 +137,6 @@ TOPICS_FOR_TEACHER_CABINET: list[str] = [
 
 TOPICS_FOR_ADMIN_CABINET: list[str] = [
     "Управление пользователями",
-    "Управление админами и учителями",
-    "Работа с базами данных",
-    "",
+    "Массовая работа с пользователями",
+    "Работа с базами данных"
 ]
