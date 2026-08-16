@@ -26,7 +26,7 @@ function createForm() {
     fields.appendChild(form);
 }
 
-function createDiffField() {
+function createDiffField(difficulty = '') {
     const difficulties = ['Базовый', 'Средний', 'Сложный'];
     var form = document.getElementById('form');
     
@@ -48,6 +48,9 @@ function createDiffField() {
         option.innerText = difficulties[i - 1];
         diff.appendChild(option);
     }
+    if (difficulty) {
+        diff.selectedIndex = difficulties.indexOf(difficulty);
+    }
 }
 
 function createTextArea(areaIdName, qType) {
@@ -55,7 +58,7 @@ function createTextArea(areaIdName, qType) {
     
     var label = document.createElement('label');
     label.className = 'mb-3 h4';
-    label.innerText = 'Введите содержимое вопроса (задание ' + qType + '):';
+    label.innerText = `Введите содержимое вопроса (задание ${qType}):`;
     form.appendChild(label);
     
     var textArea = document.createElement('textarea');
@@ -87,7 +90,7 @@ function createFiles() {
     }
 }
 
-function createOneAnswer(specNum = '') {
+function createOneAnswer(answers, specNum = '') {
     var form = document.getElementById('form');
     
     var label = document.createElement('label');
@@ -105,11 +108,15 @@ function createOneAnswer(specNum = '') {
         input.name = `q_right_answer_${specNum}`;
         input.id = `q_right_answer_${specNum}`;
     }
-    input.value = '';
+    if (answers[0]) {
+        input.value = answers[0];
+    } else {
+        input.value = '';
+    }
     form.appendChild(input);
 }
 
-function createTwoAnswers(specNum = '') {
+function createTwoAnswers(answers, specNum = '') {
     var form = document.getElementById('form');
     
     var label = document.createElement('label');
@@ -128,18 +135,27 @@ function createTwoAnswers(specNum = '') {
     div.appendChild(span);
 
     for (let i = 1; i <= 2; i++) {
-        var input = document.createElement('input');
+        let input = document.createElement('input');
         input.className = 'form-control';
         input.type = 'text';
-        input.name = `q_right_answer_${i.toString()}`;
-        input.id = `q_right_answer_${i.toString()}`;
+        if (!specNum) {
+            input.name = `q_right_answer_${i.toString()}`;
+            input.id = `q_right_answer_${i.toString()}`;
+        } else {
+            input.name = `q_right_answer_${specNum}_${i.toString()}`;
+            input.id = `q_right_answer_${specNum}_${i.toString()}`;
+        }
         input.setAttribute('aria-label', `${i}`);
-        input.value = '';
+        if (answers[i - 1]) {
+            input.value = answers[i - 1];
+        } else {
+            input.value = '';
+        }
         div.appendChild(input);
     }
 }
 
-function createManyAnswers(value = 17) {
+function createManyAnswers(answers, value = 17) {
     const q_nums = [
             'q_right_answer_1',
             'q_right_answer_2',
@@ -171,14 +187,14 @@ function createManyAnswers(value = 17) {
             'Восьмая пара ответов',
             'Девятая пара ответов'
     ];
-    var form = document.getElementById('form');
+    let form = document.getElementById('form');
     
-    var label = document.createElement('label');
+    let label = document.createElement('label');
     label.className = 'mt-3 mb-3 h4';
     label.innerText = 'Добавьте правильные ответы:';
     form.appendChild(label);
     
-    var qPairNum = 0
+    let qPairNum = 0
     for (let i = 1; i <= value; i += 2) {
         var div = document.createElement('div');
         div.className = 'input-group w-75';
@@ -196,8 +212,13 @@ function createManyAnswers(value = 17) {
             input.type = 'text';
             input.ariaLabel = (i + j).toString();
             input.className = 'form-control';
-            input.id = 'q_right_answer_' + (i + j).toString();
-            input.name = 'q_right_answer_' + (i + j).toString();
+            input.id = `q_right_answer_${(i + j).toString()}`;
+            input.name = `q_right_answer_${(i + j).toString()}`;
+            if (answers[i + j - 1]) {
+                input.value = answers[i + j - 1];
+            } else {
+                input.value = '';
+            }
             div.appendChild(input);
         }
     }
@@ -229,7 +250,14 @@ function createColorLine(size = '10', color = 'blue') {
     form.appendChild(line);
 }
 
-function createQTypeFields(selectValue) {
+function createQTypeFields(
+    selectValue,
+    difficulty = '',
+    datas = ['', '', ''],
+    forCreate = true,
+    answers = null
+) {
+    answers = answers ?? [];
 	if (window.editorInstance) {
 		window.editorInstance.destroy();
 	}
@@ -241,44 +269,58 @@ function createQTypeFields(selectValue) {
 	}
     removeFields();
     createForm();
-    createDiffField();
+    createDiffField(difficulty);
     
 	if (selectValue != specialQ) {
 		var textArea = createTextArea('q_text', selectValue);
-        window.loadCKEditor(textArea, 0);
+        window.loadCKEditor(textArea, 0, datas[0]);
 	}
     if (oneAnsQ.includes(selectValue)) {
         if (oneAnsQFiles.includes(selectValue)) {
             createFiles();
         }
-		createOneAnswer();
+		createOneAnswer(answers);
 	} else if (twoAnsQFiles.includes(selectValue)) {
 		createFiles();
-		createTwoAnswers();
+		createTwoAnswers(answers);
 	} else if (selectValue == manyAnsQ) {
-		createManyAnswers();
+		createManyAnswers(answers);
 	} else if (selectValue == manyAnsQFiles) {
 		createFiles();
-		createManyAnswers(3);
+		createManyAnswers(answers, 3);
 	} else if (selectValue == specialQ) {
-		var textAreaNineteen = createTextArea('q_text_19', '19');
-        createOneAnswer('19');
-        window.loadCKEditor(textAreaNineteen, 0);
+		let textAreaNineteen = createTextArea('q_text_19', '19');
+        if (answers[0]) {
+            createOneAnswer(answers[0], '19');
+        } else {
+            createOneAnswer(answers, '19');
+        }
+        window.loadCKEditor(textAreaNineteen, 0, datas[0]);
         createColorLine('5', 'black')
 
-        var textAreaTwenty = createTextArea('q_text_20', '20');
-        createTwoAnswers('20');
-        window.loadCKEditor(textAreaTwenty, 1);
+        let textAreaTwenty = createTextArea('q_text_20', '20');
+        if (answers[1]) {
+            createTwoAnswers(answers[1], '20');
+        } else {
+            createTwoAnswers(answers, '20');
+        }
+        window.loadCKEditor(textAreaTwenty, 1, datas[1]);
         createColorLine('5', 'black')
 
-        var textAreaTwentyOne = createTextArea('q_text_21', '21');
-        createOneAnswer('21');
-        window.loadCKEditor(textAreaTwentyOne, 2);
+        let textAreaTwentyOne = createTextArea('q_text_21', '21');
+        if (answers[2]) {
+            createOneAnswer(answers[2], '21');
+        } else {
+            createOneAnswer(answers, '21');
+        }
+        window.loadCKEditor(textAreaTwentyOne, 2, datas[2]);
 	}
-    createColorLine();
-    if (selectValue != specialQ) {
-        createButtonSave(`getDataToSave(${selectValue})`)
-    } else {
-        createButtonSave(`getDataToSave1921()`)
+    if (forCreate) {
+        createColorLine();
+        if (selectValue != specialQ) {
+            createButtonSave(`getDataToSave(${selectValue})`)
+        } else {
+            createButtonSave(`getDataToSave1921()`)
+        }
     }
 }
