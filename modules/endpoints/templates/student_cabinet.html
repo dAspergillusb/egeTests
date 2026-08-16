@@ -126,7 +126,7 @@
     <nav class="col-md-3 col-lg-2 d-md-block sidebar collapsing collapse h-100" data-bs-toggle="collapse" id="navigation">
         <div class="align-items-start">
           <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-            <button class="nav-link active" id="com-stat" data-bs-toggle="pill" data-bs-target="#common-statistics" type="button" role="tab" aria-controls="common-statistics" aria-selected="true">Таблица</button>
+            <button class="nav-link active" id="com-stat" data-bs-toggle="pill" data-bs-target="#common-statistics" type="button" role="tab" aria-controls="common-statistics" aria-selected="true">Диаграммы</button>
             <button class="nav-link" id="q-stat" data-bs-toggle="pill" data-bs-target="#questions-statistics" type="button" role="tab" aria-controls="questions-statistics" aria-selected="false">Гистограммы</button>
             <button class="nav-link" id="tests" data-bs-toggle="pill" data-bs-target="#oldTests" type="button" role="tab" aria-controls="oldTests" aria-selected="false">Мои пройденные тесты</button>
           </div>
@@ -138,67 +138,8 @@
         <div class="tab-content" id="v-pills-tabContent">
           <div class="tab-pane fade show active" id="common-statistics" role="tabpanel" aria-labelledby="com-stat">
             <p class="h4 lh-base mb-2">
-              Статистика ученика в виде таблицы:
+              Статистика ученика в виде круговых диаграмм:
             </p>
-<!--            <table class="table table-bordered border-dark table-secondary table-hover w-100">-->
-<!--              <thead>-->
-<!--                <tr>-->
-<!--                  <th scope="col">Тип статистики</th>-->
-<!--                  <th scope="col">Общее число решенных заданий</th>-->
-<!--                  <th scope="col">Общее число правильных ответов</th>-->
-<!--                  <th scope="col">Процент выполнения</th>-->
-<!--                  <th scope="col">Вывод</th>-->
-<!--                </tr>-->
-<!--              </thead>-->
-<!--              <tbody>-->
-<!--              {% for i in range(len(labels)) %}-->
-<!--              {% if common_values[i] <= 10 %}-->
-<!--              <tr>-->
-<!--              {% elif 0 <= accuracy_persent_values[i] < 40 %}-->
-<!--              <tr class="table-bordered border-dark table-danger">-->
-<!--              {% elif 40 <= accuracy_persent_values[i] < 60 %}-->
-<!--              <tr class="table-bordered border-dark table-warning">-->
-<!--              {% elif 60 <= accuracy_persent_values[i] < 80 %}-->
-<!--              <tr class="table-bordered border-dark table-primary">-->
-<!--              {% else %}-->
-<!--              <tr class="table-bordered border-dark table-success">-->
-<!--              {% endif %}-->
-<!--                  <td>-->
-<!--                    {{ labels[i] }}-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ common_values[i] }} шт.-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ right_answers_values[i] }} шт.-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ accuracy_persent_values[i] }} %-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ conclusions_for_results[i] }}-->
-<!--                  </td>-->
-<!--                </tr>-->
-<!--              {% endfor %}-->
-<!--                <tr class="table-bordered border-dark table-info">-->
-<!--                  <td>-->
-<!--                    Всего-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ common_statistics.get("absolute_questions_value") }} шт.-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ common_statistics.get("absolute_right_answers_value") }} шт.-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ common_statistics.get("absolute_accuracy_persent") }} %-->
-<!--                  </td>-->
-<!--                  <td>-->
-<!--                    {{ common_statistics.get("result") }}-->
-<!--                  </td>-->
-<!--                </tr>-->
-<!--              </tbody>-->
-<!--            </table>-->
             <div class="row row-cols-3">
             {% for i in range(len(labels)) %}
               <div class="col mb-4">
