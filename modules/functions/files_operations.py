@@ -1,64 +1,65 @@
-from os import mkdir, path, listdir
+from os import mkdir, path, listdir, remove
+from pathlib import Path
+from typing import Callable
+from uuid import uuid4
+from aiofiles import open as async_open
 from fastapi import UploadFile
 from ..functions.security import generate_code_from_password
-from ..databases.UsersDB import Users, UsersDB
-from ..databases.UsersStatisticsDB import UsersStatistics, UsersStatisticsDB
-from ..endpoints.config import load_db_names, RANKS
+from anyio import to_thread
+from .._types.Types import Ranks, Actions
 
-def save_to_file(q_number: str, file: UploadFile) -> str:
-    filename_extension: str = file.filename.split(".")[-1]
-    if not path.exists(f"files/{q_number}"):
-        mkdir(f"files/{q_number}")
-    files_value: int = len(listdir(f"files/{q_number}"))
-    with open(f"files/{q_number}/{q_number}_{files_value + 1}.{filename_extension}", "wb") as data:
-        data.write(file.file.read())
-    return f"files/{q_number}/{q_number}_{files_value + 1}.{filename_extension}"
 
-def change_db_names(
-        *,
-        u_db_name: str,
-        u_stat_db_name: str,
-        inf_db_name: str = "informatics_db"
+async def save_to_file(q_number: int, file: UploadFile) -> str:
+    filepath: str = f"files/{q_number}/"
+    filename_extension: str = Path(file.filename).suffix.lower()
+    if not await to_thread.run_sync(path.exists, filepath):
+        await to_thread.run_sync(mkdir, filepath)
+    # files_value: int = len(listdir(f"files/{q_number}"))
+    uuid_name: str = uuid4().hex
+    full_filename_filepath: str = f"{filepath}{uuid_name}{filename_extension}"
+    async with async_open(full_filename_filepath, "wb") as data:
+        await data.write(file.file.read())
+    return full_filename_filepath
+
+
+async def change_file_in_database(database_filepath: str, new_file: UploadFile, q_number: int) -> str:
+    new_filepath: str = await save_to_file(q_number=int(q_number), file=new_file)
+    await remove_file(database_filepath)
+    return new_filepath
+
+
+async def remove_file(database_filepath: str) -> None:
+    if database_filepath:
+        try:
+            await to_thread.run_sync(remove, database_filepath)
+        except FileNotFoundError:
+            print(f"There is no file '{database_filepath}' in database! Continue...")
+        except TypeError:
+            print("Adding new file to database...")
+
+
+async def change_env_parameter(
+        var_name: str,
+        old_value: str = "False",
+        new_value: str = "True"
 ) -> None:
-    with open("db_names.txt", "w") as new_db_names:
-        new_db_names.write(
-            f"{inf_db_name}\n{u_db_name}\n{u_stat_db_name}"
-        )
-    load_db_names()
+    if any((not old_value, not new_value)):
+        return
+    async with async_open(f".env", "r") as file:
+        data: str = await file.read()
+    data = data.replace(f"{var_name}={old_value}", f"{var_name}={new_value}")
+    # print(var_name, old_value, new_value)
+    async with async_open(f".env", "w") as file:
+        await file.write(data)
 
-def create_new_dbs(
-        csv_file: str,
-        u_db_name: str,
-        u_stat_db_name: str,
-        inf_db_name: str = "informatics_db"
-) -> bool:
-    data_to_load: list[dict[str, str | int]] = [
-        {
-            "firstname": firstname,
-            "lastname": lastname,
-            "sex": sex,
-            "school_class": school_class,
-            "username": username,
-            "password": generate_code_from_password(password=password),
-            "rank": rank
-        }
-        for firstname, lastname, sex, school_class, username, password, rank in [line.split(";") for line in csv_file.split("\n") if line]
-    ]
-    new_u_db: UsersDB = UsersDB(db_name=u_db_name)
-    new_u_stat_db: UsersStatisticsDB = UsersStatisticsDB(db_name=u_stat_db_name)
-    for user_data in data_to_load:
-        new_u_db.add_instance(user_data=user_data)
-        if user_data["rank"] not in list(RANKS.keys())[1:]:
-            new_u_stat_db.add_statistics(
-                statistics_data=
-                {
-                    "firstname": user_data["firstname"],
-                    "lastname": user_data["lastname"],
-                    "school_class": user_data["school_class"]
-                }
-            )
-    change_db_names(
-        u_db_name=u_db_name,
-        u_stat_db_name=u_stat_db_name
+
+async def env_full_rewrite(full_env: dict[str, str]) -> None:
+    env_parameters: str = '\n'.join(
+        f"{key}={value}" for key, value in full_env.items()
     )
-    return True
+    async with async_open(f".env", "w") as file:
+        await file.write(env_parameters)
+
+
+if __name__ == '__main__':
+    print(uuid4(), uuid8())
