@@ -1,35 +1,41 @@
+from collections.abc import Sequence, Generator
+from collections import defaultdict
 from typing import Iterator
 from datetime import datetime
 from sqlalchemy import (
-    create_engine,
-    Engine,
-    Column,
+    select,
+    Result,
+    Select,
     Integer,
     String,
-    Boolean,
-    Connection,
-    ForeignKey
+    ForeignKey,
+    TextClause
 )
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from random import randint, choice
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    AsyncEngine,
+    async_sessionmaker
+)
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql.expression import text
+from ..endpoints.config import DB_URL_PART, env_settings
+from .MainDB import BASE_USERS
+from .InformaticsDB import Informatics, InformaticsDB
+from ..errors.db_errors import NotMainDBNameError
 
-BASE = declarative_base()
 
-
-class DailyStatistics(BASE):
-    __tablename__: str = "daily_statistics"
-    id: Column[Integer] = Column(Integer, primary_key=True)
-    user_id: Column[Integer] = Column(Integer)
-    firstname: Column[String] = Column(String(100), nullable=False)
-    lastname: Column[String] = Column(String(100), nullable=False)
-    test: Column[String] = Column(String)
-    result: Column[String] = Column(String)
-    date: Column[String] = Column(String, default=datetime.now().isoformat(sep="&", timespec="minutes"))
+class DailyStatistics(BASE_USERS):
+    __tablename__: str = env_settings.DAILY_STATISTICS_DB_NAME
+    ds_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey(f"{env_settings.USERS_DB_NAME}.user_id"))
+    test: Mapped[str] = mapped_column(String)
+    result: Mapped[str] = mapped_column(String)
+    date: Mapped[str] = mapped_column(String, default=datetime.now().isoformat(sep="&", timespec="minutes"))
 
     def __str__(self):
         return (
-            f"DailyStatistics(id={self.id},"
-            f" Name={self.firstname} {self.lastname},"
+            f"DailyStatistics(id={self.ds_id},"
             f" Test={self.test},"
             f" Result={self.result},"
             f" date={self.date})"
@@ -37,8 +43,7 @@ class DailyStatistics(BASE):
 
     def __repr__(self):
         return (
-            f"DailyStatistics(id={self.id},"
-            f" Name={self.firstname} {self.lastname},"
+            f"DailyStatistics(id={self.ds_id},"
             f" Test={self.test},"
             f" Result={self.result},"
             f" date={self.date})"
@@ -50,44 +55,80 @@ class DailyStatisticsDB:
     Class creates or connects to database with statistics from different tests.
     """
 
-    def __init__(self, db_name: str = "daily_statistics_db"):
+    def __init__(self, db_name: str | None):
+        if not db_name:
+            raise NotMainDBNameError()
         self.db_name = db_name
         self.engine = self._create_engine()
-        BASE.metadata.create_all(self.engine)
-        BASE.metadata.bind = self.engine
-        self.db_session: sessionmaker[Session] = sessionmaker(bind=self.engine)
-        self.session: Session = self.db_session()
+        self.session: async_sessionmaker[AsyncSession] = async_sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
 
-    def _create_engine(self) -> Engine:
-        db: Engine = create_engine(f"sqlite:///database/{self.db_name}.db")
+    def _create_engine(self) -> AsyncEngine:
+        db: AsyncEngine = create_async_engine(f"{DB_URL_PART}{self.db_name}")
         return db
 
-    def _connect(self) -> Connection:
-        db_connect: Connection = self.engine.connect()
-        return db_connect
+    async def init_db(self) -> None:
+        async with self.engine.begin() as connection:
+            await connection.run_sync(BASE_USERS.metadata.create_all)
+            print(f"Database initialized: {DailyStatistics.__tablename__}")
 
-    def add_statistics(self, *, statistics_data: dict[str, str | int]) -> None:
-        statistics: DailyStatistics = DailyStatistics(**statistics_data)
-        self.session.add(statistics)
-        self.session.commit()
-        # self.session.close()
+    async def add_statistics(self, *, statistics_data: dict[str, str | int]) -> None:
+        async with self.session() as session:
+            statistics = DailyStatistics(**statistics_data)
+            session.add(statistics)
+            await session.commit()
 
-    # def change_statistics(self, id: int, data_to_change: dict[str, list[int]]) -> None:
-    #     statistics: type[UsersStatistics] = self.session.query(UsersStatistics).get(id)
-    #     for stat in statistics.to_dict():
-    #         if data_to_change.get(stat):
-    #             current_common_value, current_right_value, *_ = map(float, getattr(statistics, stat).split("&"))
-    #             common_value, right_value = data_to_change.get(stat)
-    #             # print(current_common_value, current_right_value, common_value, right_value)
-    #             new_common_value = current_common_value + common_value
-    #             new_right_value = current_right_value + right_value
-    #             statistics.__setattr__(stat, "&".join([
-    #                 f"{new_common_value}",
-    #                 f"{new_right_value}",
-    #                 f"{(new_right_value / new_common_value) * 100}",
-    #             ]))
-    #     self.session.commit()
-    #     # self.session.close()
+    async def get_daily_statistics_for_student(self, *, user_id: int) -> dict[str, defaultdict[str, list[type[Informatics]]]]:
+        if not user_id:
+            return {}
+        async with self.session() as session:
+            statement: Select[tuple[DailyStatistics]] = select(DailyStatistics).where(DailyStatistics.user_id == user_id)
+            result: Result[tuple[DailyStatistics]] = await session.execute(statement)
+            student_raw_daily_statistics: Sequence[DailyStatistics] = result.scalars().all()
+
+        student_daily_statistics: dict[str, defaultdict[str, list[type[Informatics]]]] = {}
+        for daily_stat in student_raw_daily_statistics:
+            year_month_day, hours_minutes = daily_stat.date.split("&")
+            old_variant: list[type[Informatics] | None] = [await InformaticsDB().get_question(q_id=q_id) for q_id in map(int, daily_stat.test.split("&"))]
+            if not student_daily_statistics.get(year_month_day):
+                student_daily_statistics[year_month_day] = defaultdict(list)
+            student_daily_statistics[year_month_day][hours_minutes].extend(old_variant)
+        return student_daily_statistics
+
+    async def get_old_test(self, date: str) -> tuple[dict[int, type[Informatics] | None], dict[int, int]] | None:
+        async with self.session() as session:
+            statement: Select[tuple[DailyStatistics]] = select(DailyStatistics).where(DailyStatistics.date == date)
+            result: Result[tuple[DailyStatistics]] = await session.execute(statement)
+            old_test_ids_daily_statistics: type[DailyStatistics] | None = result.scalars().first()
+        if old_test_ids_daily_statistics:
+            old_test: dict[int, type[Informatics] | None] = {
+                num: await InformaticsDB().get_question(q_id=q_id) for num, q_id in
+                enumerate(map(int, old_test_ids_daily_statistics.test.split("&")), start=1)
+            }
+            old_results: dict[int, int] = {
+                num: result for num, result in
+                enumerate(map(int, old_test_ids_daily_statistics.result.split("&")), start=1)
+            }
+            return old_test, old_results
+        return None
+
+    async def clear_table(self) -> None:
+        async with self.session() as session:
+            statement: TextClause = text(f"TRUNCATE TABLE {DailyStatistics.__tablename__} RESTART IDENTITY;")
+            try:
+                await session.execute(statement)
+                await session.commit()
+            except Exception as e:
+                await session.rollback()
+                print(f"While clearing table rise exception {e}")
+
+    async def close_engine(self, db_name: str) -> None:
+        await self.engine.dispose()
+        del self.engine
+        print(f"Pull of engine connection with {db_name} closed.")
 
 
 if __name__ == '__main__':

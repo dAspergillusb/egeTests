@@ -1,30 +1,46 @@
-from typing import Type
+from asyncio import CancelledError
+from functools import singledispatchmethod
 from sqlalchemy import (
-    create_engine,
-    Engine,
-    Column,
+    select,
+    Result,
     Integer,
     String,
     Boolean,
-    Connection
+    Select,
+    text,
+    Sequence,
+    TextClause
 )
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.exc import OperationalError, DBAPIError, IntegrityError
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    AsyncEngine,
+    async_sessionmaker
+)
+from starlette import status
+
+from .._types.Types import Ranks
+from ..endpoints.config import env_settings, DB_URL_PART
+from sqlalchemy.orm import Mapped, mapped_column
+from .MainDB import BASE_USERS
+from .UsersStatisticsDB import UsersStatisticsDB
+from .ActiveStudentsTest import ActiveStudentsTestDB
+from .DailyStatisticsDB import DailyStatisticsDB
+from ..errors.db_errors import NotMainDBNameError
 
 
-BASE = declarative_base()
-
-
-class Users(BASE):
-    __tablename__ = "users"
-    user_id: Column[Integer] = Column(Integer, primary_key=True)
-    firstname: Column[String] = Column(String(100), nullable=False)
-    lastname: Column[String] = Column(String(100), nullable=False)
-    sex: Column[String] = Column(String(8), nullable=False)
-    school_class: Column[String] = Column(String(100))
-    username: Column[String] = Column(String(100), nullable=False)
-    password: Column[String] = Column(String(250), nullable=False)
-    rank: Column[String] = Column(String(15), default="student")
-    active: Column[Boolean] = Column(Boolean, default=True)
+class Users(BASE_USERS):
+    __tablename__ = env_settings.USERS_DB_NAME
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    firstname: Mapped[str] = mapped_column(String, nullable=False)
+    lastname: Mapped[str] = mapped_column(String, nullable=False)
+    sex: Mapped[str] = mapped_column(String, nullable=False)
+    school_class: Mapped[str] = mapped_column(String)
+    username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    password: Mapped[str] = mapped_column(String, nullable=False)
+    rank: Mapped[str] = mapped_column(String, default="student")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     def __contains__(self, item: str):
         return self.username == item
@@ -38,91 +54,179 @@ class Users(BASE):
 
 class UsersDB:
 
-    def __init__(self, db_name: str = "users_db", database_path: str = "database"):
+    def __init__(self, db_name: str | None):
+        if not db_name:
+            raise NotMainDBNameError()
         self.db_name = db_name
-        self.database_path = database_path
         self.engine = self._create_engine()
-        BASE.metadata.create_all(self.engine)
-        BASE.metadata.bind = self.engine
-        self.db_session: sessionmaker[Session] = sessionmaker(bind=self.engine)
-        self.session: Session = self.db_session()
-
-    def _create_engine(self) -> Engine:
-        db: Engine = create_engine(f"sqlite:///{self.database_path}/{self.db_name}.db")
-        return db
-
-    def _connect(self) -> Connection:
-        db_connect: Connection = self.engine.connect()
-        return db_connect
-
-    def exist_username(self, username: str | Column[String]) -> bool:
-        return bool(self.session.query(Users).filter(Users.username == username).first())
-
-    """def exist_email(self, email: str | Column[String]) -> bool:
-        return bool(self.session.query(Users).filter(Users.email == email).first())"""
-
-    def add_instance(self, *, user_data: dict[str, str | int]) -> bool | None:
-        user = Users(
-            firstname=user_data.get("firstname"),
-            lastname=user_data.get("lastname"),
-            sex=user_data.get("sex"),
-            school_class=user_data.get("school_class"),
-            username=user_data.get("username"),
-            password=user_data.get("password"),
-            rank=user_data.get("rank"),
+        self.session: async_sessionmaker[AsyncSession] = async_sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False
         )
 
-        self.session.add(user)
-        self.session.commit()
-        return True
+    def _create_engine(self) -> AsyncEngine:
+        db: AsyncEngine = create_async_engine(f"{DB_URL_PART}{self.db_name}")
+        return db
 
-    def change_instance(self, user_id: int = None, username: Column[String] = None, *, school_class: str = None, email: str = None,
-                        password: str = None, rank: str = None, active: bool = None) -> bool | None:
-        if user_id:
-            user: Type[Users] = self.session.query(Users).get(user_id)
-        elif username:
-            user: Type[Users] = [_user for _user in self.session.query(Users).all() if _user.username == username][0]
-        else:
+    async def init_db(self) -> None:
+        async with self.engine.begin() as connection:
+            await connection.run_sync(BASE_USERS.metadata.create_all)
+            print(f"Database initialized: {Users.__tablename__}")
+
+    async def get_all_users(self) -> Sequence[Users]:
+        async with self.session() as session:
+            query: Select[tuple[Users]] = select(Users)
+            result: Result[tuple[Users]] = await session.execute(query)
+            return result.scalars().all()
+
+    async def exist_username(self, username: str | Mapped[str]) -> bool:
+        async with self.session() as session:
+            query: Select[tuple[Users]] = select(Users).where(Users.username == username)
+            result: Result[tuple[Users]] = await session.execute(query)
+            return bool(result.scalars().first())
+
+    async def choose_user(self, **user_data) -> type[Users] | None:
+        async with self.session() as session:
+            if "user_id" in user_data:
+                return await session.get(Users, user_data["user_id"])
+            query: Select[tuple[Users]] = select(Users).where(Users.username == user_data["username"])
+            result: Result[tuple[Users]] = await session.execute(query)
+            return result.scalars().first()
+
+    async def choose_users_by_rank(self, rank: str = "student") -> tuple[type[Users] | None]:
+        async with self.session() as session:
+            query: Select[tuple[Users]] = select(Users).where(Users.rank == rank)
+            result = await session.execute(query)
+            return tuple(result.scalars().all())
+
+    @singledispatchmethod
+    async def add_user(self, user_data) -> bool | int | Users:
+        print(f"This type of user_data ({type(user_data)} does not support!")
+        return False
+
+    @add_user.register
+    async def _(self, user_data: Users) -> bool | int:
+        user_exists: bool = await self.exist_username(user_data.username)
+        if user_exists:
             return False
+        del user_data.user_id
+        async with self.session() as session:
+            print(user_data.__dict__)
+            new_user: Users = Users(**{k: v for k, v in user_data.__dict__.items() if not k.startswith("_")})
+            session.add(new_user)
+            try:
+                await session.commit()
+            except IntegrityError as error:
+                await session.rollback()
+                print(f"While executing there is an error: {error}")
+                return False
+            except OperationalError as error:
+                await session.rollback()
+                print(f"While executing there is an error: {error}")
+                return False
+            except DBAPIError as error:
+                await session.rollback()
+                print(f"While executing there is an error: {error}")
+                return False
+            except CancelledError as error:
+                await session.rollback()
+                print(f"While executing there is an error: {error}")
+                return False
+            return new_user.user_id
 
-        if school_class:
-            user.school_class = school_class
+    @add_user.register
+    async def _(self, user_data: dict) -> bool | Users:
+        user_exists: bool = await self.exist_username(user_data.get("username", ""))
+        if user_exists:
+            return False
+        async with self.session() as session:
+            new_user: Users = Users(**user_data)
+            session.add(new_user)
+            await session.commit()
+            if new_user.rank == Ranks.STUDENT:
+                statistics_db: UsersStatisticsDB = UsersStatisticsDB(db_name=env_settings.MAIN_DB_USERS_NAME)
+                await statistics_db.add_statistics(
+                    statistics_data={"user_id": new_user.user_id}
+                )
+                # print(f"User {new_user.user_id}:{new_user.username}:{stat.user_id}")
+        return new_user
 
-        if email:
-            user.email = email
+    async def change_user_data(self, *, data_to_change: dict[str, str | int], user_id: int | None = None) -> bool:
+        user: type[Users] | None = None
+        if user_id:
+            user = await self.choose_user(user_id=user_id)
+        elif data_to_change.get("username"):
+            user = await self.choose_user(username=data_to_change.pop("username"))
 
-        if password:
-            user.password = password
+        async with self.session() as session:
+            if user:
+                for data, value in data_to_change.items():
+                    if any((
+                        value,
+                        isinstance(value, bool),
+                    )):
+                        user.__setattr__(data, value)
+                session.add(user)
+                await session.commit()
+                return True
+        return False
 
-        if rank:
-            user.rank = rank
+    async def delete_user(self, user_id: Mapped[int] | int) -> bool | int:
+        user: type[Users] | None = await self.choose_user(user_id=user_id)
+        if user:
+            if user.rank == Ranks.STUDENT:
+                await UsersStatisticsDB(db_name=env_settings.MAIN_DB_USERS_NAME).delete_statistics(user_id=user_id)
+            if user.rank == Ranks.ADMIN:
+                admins_count: int = len(await self.choose_users_by_rank(rank="admin"))
+                if admins_count < 2:
+                    return status.HTTP_403_FORBIDDEN
+            async with self.session() as session:
+                await session.delete(user)
+                try:
+                    await session.commit()
+                except IntegrityError as error:
+                    await session.rollback()
+                    print(f"While executing there is an error: {error}")
+                    return False
+                except OperationalError as error:
+                    await session.rollback()
+                    print(f"While executing there is an error: {error}")
+                    return False
+                except DBAPIError as error:
+                    await session.rollback()
+                    print(f"While executing there is an error: {error}")
+                    return False
+                except CancelledError as error:
+                    await session.rollback()
+                    print(f"While executing there is an error: {error}")
+                    return False
+                return True
+        return status.HTTP_404_NOT_FOUND
 
-        if active:
-            user.active = active
-        self.session.commit()
+    async def clear_table(self) -> int | None:
+        async with self.session() as session:
+            statement: TextClause = text(f"TRUNCATE TABLE {Users.__tablename__} RESTART IDENTITY CASCADE;")
+            try:
+                await session.execute(statement)
+                await session.commit()
+            except Exception as e:
+                await session.rollback()
+                print(f"While clearing table rise exception {e}")
+                return status.HTTP_400_BAD_REQUEST
+        await UsersStatisticsDB(db_name=env_settings.MAIN_DB_USERS_NAME).clear_table()
+        await DailyStatisticsDB(db_name=env_settings.MAIN_DB_USERS_NAME).clear_table()
+        await ActiveStudentsTestDB(db_name=env_settings.MAIN_DB_USERS_NAME).clear_table()
 
-    def delete_instance(self, _user: Users = None, user_id: Column[Integer] | int = None, username: str = None) -> None:
-        if _user:
-            self.session.delete(_user)
-            self.session.commit()
-        elif user_id:
-            _user = self.session.query(Users).get(user_id)
-            if _user:
-                self.session.delete(_user)
-                self.session.commit()
-        elif username:
-            _user: Type[Users] | None = None
-            for user in self.session.query(Users).all():
-                if user.username == username:
-                    _user = user
-                    break
-            if _user:
-                self.session.delete(_user)
-                self.session.commit()
+    async def close_engine(self, db_name: str) -> None:
+        await self.engine.dispose()
+        del self.engine
+        print(f"Pull of engine connection with {db_name} closed.")
+
 
 
 if __name__ == '__main__':
-    database = UsersDB(database_path="../../database")
+    database = UsersDB()
     # user = database.session.query(Users).filter(Users.username == "millerma").first()
     # print(user)
     # user.password = generate_code_from_password("3Miller#Maria3")
