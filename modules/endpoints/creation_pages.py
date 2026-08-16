@@ -1,72 +1,97 @@
-from fastapi import FastAPI, Request, Form, UploadFile
+from typing import Callable, Optional
+from fastapi import (
+    FastAPI,
+    Request,
+    Form,
+    UploadFile,
+    HTTPException,
+    Depends,
+    Cookie
+)
+from sqlalchemy.orm import InstrumentedAttribute
+from starlette.responses import RedirectResponse
 from starlette.templating import _TemplateResponse
-from ..databases.InformaticsDB import Informatics
-from ..models.test_creation_model import (TestCreation,
-                                          ImportCSV,
-                                          TestCreation1921,
-                                          DataFromTopic,
-                                          QuestionTypeNeeded)
-from ..functions.database_operations import (save_test_question,
-                                             get_q_types_values,
-                                             get_all_questions_for_type,
-                                             get_statistics_for_students)
-from ..functions.files_operations import save_to_file, create_new_dbs
+from .._types.Types import Ranks
+from ..databases.InformaticsDB import Informatics, InformaticsDB
+from ..models.test_creation_model import (
+    TestCreation,
+    ImportCSV,
+    TestCreation1921,
+    DataFromTopic,
+    QuestionTypeNeeded,
+    QuestionIdToChangeRemove
+)
+from ..functions.database_operations import (
+    save_test_question,
+    get_q_types_values,
+    get_all_questions_for_type,
+    get_sorted_statistics_for_students,
+    change_test_question
+)
+from .config import TOPICS_FOR_TEACHER_CABINET, env_settings
+from ..functions.files_operations import save_to_file
+# from ..functions.database_operations import create_new_users
+from ..functions.dependencies import Roles
 from .main_pages import TEMPLATES
 
+teacher_admin_allowed: Roles = Roles(allowed_roles=[Ranks.TEACHER, Ranks.ADMIN])
+
 def register_creation_pages(app: FastAPI) -> None:
+
+    @app.get("/teacher_cabinet")
+    def get_teacher_cabinet(
+            request: Request,
+            rank: Optional[str] = Cookie(None),
+            name: str = Depends(teacher_admin_allowed)
+    ) -> _TemplateResponse:
+        return TEMPLATES.TemplateResponse(
+            request=request,
+            name="/teacher_cabinet.html",
+            context={
+                "request": request,
+                "name": name,
+                "rank": rank,
+                "topics": enumerate(TOPICS_FOR_TEACHER_CABINET, start=1),
+                "nav_topic": "Кабинет учителя"
+            }
+        )
 
     @app.post("/data_from_topic")
     async def get_data_from_topic(
             request: Request,
-            topic: DataFromTopic
+            topic: DataFromTopic,
+            _=Depends(teacher_admin_allowed)
     ):
         topic_number: int = topic.get_topic_number()
-        match topic_number:
-            case 1:
-                return 1, get_q_types_values()
-            case 2:
-                return 2, 2
-            case 3:
-                return 3, 3
-            case 4:
-                return 4, sorted(get_statistics_for_students(), key=lambda user: user[0])
-        return 0
+        topics = {
+            topic_number == 1: get_q_types_values,
+            topic_number == 2: 2,
+            topic_number == 3: 3,
+            topic_number == 4: get_sorted_statistics_for_students,
+        }
+        return topic_number, topics[True] if isinstance(topics[True], int) else await topics[True]() #TODO
 
     @app.post("/get_all_q_types")
     async def get_all_type_questions(
             request: Request,
-            q_type: QuestionTypeNeeded):
-        return get_all_questions_for_type(q_type=q_type.q_type)
-
-    # @app.get("/test_constructor")
-    # def test_constructor(request: Request, firstname: str, lastname: str) -> _TemplateResponse:
-    #     request.session["firstname"] = firstname
-    #     request.session["lastname"] = lastname
-    #     return TEMPLATES.TemplateResponse(
-    #         request=request,
-    #         name="/test_pages/creation_question.html",
-    #         context={
-    #             "request": request,
-    #             "firstname": firstname,
-    #             "lastname": lastname,
-    #             "q_number": "0",
-    #             "q_difficulty": "0",
-    #             "nav_topic": "Конструтор вопросов"
-    #         }
-    #     )
+            q_type: QuestionTypeNeeded,
+            _=Depends(teacher_admin_allowed)
+    ):
+        return await get_all_questions_for_type(q_type=q_type.q_type)
 
     @app.post("/test_constructor")
     async def create_question(
             request: Request,
             data_for_create: TestCreation = Form(...),
+            _=Depends(teacher_admin_allowed)
     ) -> bool:
         file_paths: list[str] = [
-            save_to_file(
+            await save_to_file(
                 q_number=data_for_create.get_q_number(),
                 file=file
             ) for file in data_for_create.get_files()
         ]
-        return save_test_question(
+        return await save_test_question(
             question_data={
                 "q_number": data_for_create.get_q_number(),
                 "q_text": data_for_create.get_q_text(),
@@ -77,26 +102,11 @@ def register_creation_pages(app: FastAPI) -> None:
             }
         )
 
-    # @app.get("/test_constructor_19-21")
-    # def test_constructor_19_21(request: Request, firstname: str, lastname: str) -> _TemplateResponse:
-    #     request.session["firstname"] = firstname
-    #     request.session["lastname"] = lastname
-    #     return TEMPLATES.TemplateResponse(
-    #         request=request,
-    #         name="/test_pages/creation_question.html",
-    #         context={
-    #             "request": request,
-    #             "firstname": firstname,
-    #             "lastname": lastname,
-    #             "nineteen": True,
-    #             "nav_topic": "Конструтор вопросов"
-    #         }
-    #     )
-
     @app.post("/test_constructor_19-21")
     async def create_question_19_21(
             request: Request,
-            data_for_create: TestCreation1921 = Form(...)
+            data_for_create: TestCreation1921 = Form(...),
+            _=Depends(teacher_admin_allowed)
     ) -> bool:
         saved = {
             19: {
@@ -124,84 +134,68 @@ def register_creation_pages(app: FastAPI) -> None:
                 "q_right_answer": data_for_create.q_right_answer_21
             }
         }
-        return save_test_question(question_data=saved)
+        return await save_test_question(question_data=saved)
 
-    @app.get("/import_from_csv")
-    def get_page_import_from_csv(request: Request) -> _TemplateResponse:
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="import_from_csv.html",
-            context={
-                "request": request,
-                "mistake": "not",
-                "nav_topic": "Создание базы данных"
-            }
-        )
-
-    @app.get("/count_q_type_values")
-    def get_page_count_q_type_values(request: Request) -> _TemplateResponse:
-        count_q_type_values: dict[str, dict[str, int]] = get_q_types_values()
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="counting_q_type_values.html",
-            context={
-                "request": request,
-                "count_q_type_values": count_q_type_values,
-                "nav_topic": "Статистика по вопросам"
-            }
-        )
-
-    @app.post("/import_from_csv")
-    def post_import_from_csv(
+    @app.post("/questions")
+    async def get_question(
             request: Request,
-            data_to_load: ImportCSV = Form(default=""),
-    ) -> _TemplateResponse:
-        # print(data_to_load)
-        inf_db_name: str = data_to_load.inf_db_name
-        u_db_name: str = data_to_load.u_db_name
-        u_stat_db_name: str = data_to_load.u_stat_db_name
-        csv_file: str = data_to_load.csv_file.file.read().decode("utf-8")
-        print(csv_file)
-        new_dbs: bool = create_new_dbs(
-            csv_file=csv_file,
-            u_db_name=u_db_name,
-            u_stat_db_name=u_stat_db_name,
-            inf_db_name=inf_db_name,
+            q_id: QuestionIdToChangeRemove,
+            _=Depends(teacher_admin_allowed)
+    ):
+        question: type[Informatics] | None = await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).get_question(q_id=q_id.get_q_id())
+        if question:
+            if question.q_number == 19:
+                question_twenty_id, question_twenty_one_id = map(int, question.q_linked_with.split("&"))
+                question_twenty: type[Informatics] | None = await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).get_question(q_id=question_twenty_id)
+                question_twenty_one: type[Informatics] | None = await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).get_question(q_id=question_twenty_one_id)
+                summary_from_questions: dict[str, list[str] | str | int | InstrumentedAttribute[int]] = {
+                    "q_id": question.q_id,
+                    "q_number": question.q_number,
+                    "q_right_answer": [
+                        question.q_right_answer.split("&"),
+                        question_twenty.q_right_answer.split("&"),
+                        question_twenty_one.q_right_answer.split("&")
+                    ],
+                    "q_difficulty": question.q_difficulty,
+                    "q_text": [
+                        question.q_text,
+                        question_twenty.q_text,
+                        question_twenty_one.q_text
+                    ]
+                }
+                return summary_from_questions
+            question.q_text = [question.q_text]
+            question.q_right_answer = question.q_right_answer.split("&")
+            return question
+        return {}
+
+    @app.post("/questions/{q_id}")
+    async def change_question(
+            request: Request,
+            q_id: str,
+            data_to_change: TestCreation | TestCreation1921 = Form(...),
+            _=Depends(teacher_admin_allowed)
+    ):
+        # question: type[Informatics] | None = await InformaticsDB().get_question(q_id=q_id.get_q_id())
+        # if question:
+        result: list[type[Informatics] | None] = await change_test_question(
+            q_id=int(q_id),
+            data_to_change=data_to_change
         )
-        mistakes: dict[bool, str] = {
-            new_dbs: "Базы данных успешно созданы",
-            not new_dbs: "В csv-файле есть ошибки. База не создана!"
+        if result:
+            return result
+        return 404
+
+    @app.delete("/questions", status_code=204)
+    async def remove_question(
+            request: Request,
+            q_id: QuestionIdToChangeRemove,
+            _=Depends(teacher_admin_allowed)
+    ):
+        deleted: bool| HTTPException = await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).delete_question(q_id=q_id.get_q_id())
+        result: dict[bool, int] = {
+            deleted: 204,
+            not deleted: 404
         }
-        # print([item for item in reader(data_to_load.csv_file.file.read().decode("utf-8"), delimiter=";")])
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="import_from_csv.html",
-            context={
-                "request": request,
-                "mistake": not new_dbs,
-                "mistake_text": mistakes[True],
-                "nav_topic": "Создание базы данных"
-            }
-        )
+        return result[True]
 
-    @app.get("/to_html_tags")
-    def get_page_to_html_tags(
-            request: Request,
-            firstname: str,
-            lastname: str
-    ) -> _TemplateResponse:
-        return TEMPLATES.TemplateResponse(
-            request=request,
-            name="to_html_tags.html",
-            context={
-                "request": request,
-                "firstname": firstname,
-                "lastname": lastname,
-                "nav_topic": "Получить ckeditor-данные из текста"
-            }
-        )
-
-    @app.post("/to_html_tags")
-    async def post_to_html_tags(request: Request, html_tags: str):
-        print(html_tags)
-        return {"html_tags": html_tags}
