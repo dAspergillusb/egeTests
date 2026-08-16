@@ -122,7 +122,13 @@
   </head>
   <body>
 
-  {% include "navbar/navbar_top_student.html" %}
+  {% if rank == 'student' %}
+    {% include "navbar/navbar_top_student.html" %}
+  {% elif rank == 'teacher' %}
+    {% include "navbar/navbar_top_teacher.html" %}
+  {% else %}
+    {% include "navbar/navbar_top_admin.html" %}
+  {% endif %}
 
 <div class="container-fluid h-90">
   <div class="row">
@@ -138,7 +144,7 @@
                       {{ num }}
                     </button>
                     {% else %}
-                    <button id="{{ num }}" name="navButton" type="button" class="btn btn-outline-primary" onclick="getQuestionData('{{ num }}')">
+                    <button id="{{ variant[num].q_number }}" name="navButton" type="button" class="btn btn-outline-primary" onclick="getQuestionData('{{ num }}')">
                       {{ num }}
                     </button>
                     {% endif %}

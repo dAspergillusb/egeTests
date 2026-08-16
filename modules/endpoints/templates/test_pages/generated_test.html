@@ -117,7 +117,13 @@
   </head>
   <body>
 
-  {% include "navbar/navbar_top_student.html" %}
+  {% if rank == 'student' %}
+    {% include "navbar/navbar_top_student.html" %}
+  {% elif rank == 'teacher' %}
+    {% include "navbar/navbar_top_teacher.html" %}
+  {% else %}
+    {% include "navbar/navbar_top_admin.html" %}
+  {% endif %}
 
 <div class="container-fluid h-90">
   <div class="row">
