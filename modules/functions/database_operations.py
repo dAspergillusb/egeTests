@@ -547,14 +547,15 @@ async def change_users_parameters(db_structure: dict[str, str], request: Request
 
     # Check if admin not in archived database (it creates if not)
     users_db: UsersDB = UsersDB(db_name=env_settings.MAIN_DB_USERS_NAME)
-    active_admin_id: int = 0
+    active_admin_new_id: int = 0
+    print(await users_db.exist_username(active_admin.username))
     if active_admin and not await users_db.exist_username(active_admin.username):
-        active_admin_id = await users_db.add_user(active_admin)
+        active_admin_new_id = await users_db.add_user(active_admin)
 
     # Create session with old session_id
     if not await UserSessionsDB(db_name=env_settings.MAIN_DB_USERS_NAME).session_id_exists(session_id=active_session_id):
         await UserSessionsDB(db_name=env_settings.MAIN_DB_USERS_NAME).create_new_session(
-            user_id=active_admin_id,
+            user_id=active_admin_new_id if active_admin_new_id else active_admin.user_id,
             user_agent=request.headers.get("User-Agent", ""),
             ip_address=request.client.host,
             session_id=active_session_id,
