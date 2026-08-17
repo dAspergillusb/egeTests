@@ -47,15 +47,17 @@ class Ranks:
     STUDENT: str = "student"
     TEACHER: str = "teacher"
     ADMIN: str = "admin"
+    GUEST: str = "guest"
 
     def __str__(self):
-        return f"Ranks({self.STUDENT=}, {self.TEACHER=}, {self.ADMIN=})"
+        return f"Ranks({self.STUDENT=}, {self.TEACHER=}, {self.ADMIN=}, {self.GUEST=})"
 
     def redirect(self, rank: str) -> str:
         conditions: dict[str, str] = {
             self.STUDENT: "/prepare_test",
             self.TEACHER: "/teacher_cabinet",
-            self.ADMIN: "/admin_cabinet"
+            self.ADMIN: "/admin_cabinet",
+            self.GUEST: "/prepare_test"
         }
         try:
             return conditions[rank]
