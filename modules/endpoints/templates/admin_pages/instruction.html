@@ -1,0 +1,100 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Как пользоваться кабинетом администратора?</h3>
+  </div>
+  <div class="card-body">
+    <nav>
+      <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        <button class="nav-link active" id="users-admin" data-bs-toggle="tab" data-bs-target="#nav-users-admin" type="button" role="tab" aria-controls="nav-users-admin" aria-selected="true">Управление пользователями</button>
+        <button class="nav-link" id="massive-users-admin" data-bs-toggle="tab" data-bs-target="#nav-massive-users-admin" type="button" role="tab" aria-controls="nav-massive-users-admin" aria-selected="false">Массовая работа с пользователями</button>
+        <button class="nav-link" id="databases-worker" data-bs-toggle="tab" data-bs-target="#nav-databases-worker" type="button" role="tab" aria-controls="nav-databases-worker" aria-selected="false">Работа с базами данных</button>
+<!--        <button class="nav-link" id="nav-disabled-tab" data-bs-toggle="tab" data-bs-target="#nav-disabled" type="button" role="tab" aria-controls="nav-disabled" aria-selected="false" disabled>Disabled</button>-->
+      </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+      <div class="tab-pane fade show active" id="nav-users-admin" role="tabpanel" aria-labelledby="users-admin" tabindex="0">
+        <p class="mt-3" style="text-indent: 20px;">
+          В данном разделе администратор может <u>управлять пользователями</u>. Создавать новых, изменять существующих, удалять.
+        </p>
+        <p style="text-indent: 20px;">
+          Для создания нового пользователя нужно в конце списка нажать на кнопку <a class="btn btn-outline-primary btn-sm" style="text-indent: 0;">Создать пользователя</a>,
+          после чего создастся новая область для заполнения данных о новом пользователе и выбора прав доступа (администратор, учитель, ученик).
+        </p>
+        <p style="text-indent: 20px;">
+          В списке пользователей можно менять их параметры (имя, фамилия, права доступа, пол, класс (для ученика), состояние, новый пароль).
+          Для изменения параметров пользователя нужно нажать на кнопку <a class="btn btn-outline-primary btn-sm" style="text-indent: 0;">Изменить</a>. После внесений изменений нужно
+          нажать на кнопку <a class="btn btn-outline-primary btn-sm" style="text-indent: 0;">Сохранить</a>.
+          Также можно удалить пользователя, нажав на кнопку <a class="btn btn-outline-primary btn-sm" style="text-indent: 0;">Удалить</a>.
+        </p>
+        <p style="text-indent: 20px;">
+          Если изменять/создавать пользователя не требуется, то можно нажать на кнопку <a class="btn btn-outline-primary btn-sm" style="text-indent: 0;">Отменить</a>.
+        </p>
+      </div>
+      <div class="tab-pane fade" id="nav-massive-users-admin" role="tabpanel" aria-labelledby="massive-users-admin" tabindex="0">
+        <p class="mt-3" style="text-indent: 20px;">
+          В этом разделе администратор может <u>массово добавлять пользователей</u> в базу данных (например при добавлении всего класса) или <u>полностью
+          перезаписать</u> всю базу.
+        </p>
+        <p style="text-indent: 20px;">
+          Для <u>перезаписи или добавления</u> пользователей необходимо создать csv-файл с данными (его легко можно создать в табличном редакторе).
+          Он должен выглядеть следующим образом:
+        </p>
+        <p style="text-indent: 20px;">
+          Первой строкой должны идти заголовки для столбцов в <b style="color: #aa0000">строгой последовательности</b>: <b>firstname, lastname, sex, school_class, username, password, rank</b>.
+        </p>
+        <p style="text-indent: 20px;">
+          Что означают эти заголовки:
+        </p>
+        <pre>
+  firstname    - Имя;
+  lastname     - Фамилия;
+  sex          - пол;
+  school_class - класс и литерал класса;
+  username     - имя пользователя;
+  password     - пароль от учетной записи;
+  rank         - права доступа (student, teacher, admin).
+        </pre>
+        <p style="text-indent: 20px;">
+          Далее идут данные пользователей. Для учителя или администратора класс не нужен, поэтому область между двумя ";"
+          можно оставить пустой.
+        </p>
+        <p style="text-indent: 20px;">
+          <b><u>Пример готового csv-файла:</u></b>
+        </p>
+        <pre>
+  firstname;lastname;sex;school_class;username;password;rank
+  Admin;;;;admin;admin;admin
+  Teacher;;;;teacher;teacher;teacher
+  Test;User;no sex;11Z;user;user;student
+        </pre>
+      </div>
+      <div class="tab-pane fade" id="nav-databases-worker" role="tabpanel" aria-labelledby="databases-worker" tabindex="0">
+        <p class="mt-3" style="text-indent: 20px;">
+          В этом разделе администратор может посмотреть список <u>активных сессий пользователей</u> (1) или <u>активных сессий тестов для учеников</u> (2),
+          создавать/очищать <u>новые базы данных пользователей или вопросов</u> (3), а также <u>переключаться между базами данных</u> (4).
+        </p>
+        <p style="text-indent: 20px;">
+          В разделе (1) администратор может просматривать активные сессии пользователей. В каждой ячейке есть
+          кнопка для удаления этой сессии. Она становится активной, когда
+          её время выходит. На случай, если остались висячие некоторые сессии (например пользователь не вышел из кабинета,
+          а просто закрыл кладку и не вернулся к ней), можно их удалить. В ячейке, где отображается
+          текущая сессия администратора будет сверху ячейки сообщение <a class="btn btn-outline-success btn-sm" style="color: #20c997; text-indent: 0;">Текущая сессия</a>.
+        </p>
+        <p style="text-indent: 20px;">
+          Раздел (2) похож на предыдущий. Внутри карточки отображается основная информация по тесту:
+          время начала, время окончания, id-вопросов в тесте, ответы к этим вопросам (0 - ответ не дан).
+        </p>
+        <p style="text-indent: 20px;">
+          В разделе (3) администратор может добавлять новые или очищать существующие базы данных пользователей или вопросов.
+          Сначала в выпадающем меню нужно выбрать тип базы данных или опцию "Новая база". Затем нажать на кнопку
+          <a class="btn btn-outline-primary btn-sm" style="text-indent: 0;">Очистить базу данных</a>, если выбран тип базы. Если выбрана опция создания,
+          то необходимо выбрать тип создаваемой базы и задать имя для неё, затем нажать на кнопку
+          <a class="btn btn-outline-primary btn-sm" style="text-indent: 0;">Добавить базу данных</a>.
+        </p>
+      </div>
+<!--      <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab" tabindex="0">-->
+
+<!--      </div>-->
+    </div>
+  </div>
+</div>
