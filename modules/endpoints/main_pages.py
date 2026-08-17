@@ -37,9 +37,10 @@ def register_main_endpoints(app: FastAPI) -> None:
     @app.post(path="/", response_model=None)
     async def main_page_login(
             request: Request,
-            username: Annotated[str, Form()],
-            password: Annotated[str, Form()]
+            username: Annotated[str, Form()] = "",
+            password: Annotated[str, Form()] = ""
     ) -> _TemplateResponse | RedirectResponse | str:
+
         try:
             user: type[Users] | None = await UsersDB(db_name=env_settings.MAIN_DB_USERS_NAME).choose_user(username=username)
         except Exception as error:
@@ -54,7 +55,7 @@ def register_main_endpoints(app: FastAPI) -> None:
         if_user_mistake: dict[type[Users] | bool | None, str | RedirectResponse] = {
             user and check_password(
                 password=password,
-                password_from_db=f"{user.password}"): RedirectResponse(Ranks().redirect(user.rank if user else ""), status_code=status.HTTP_302_FOUND),
+                password_from_db=f"{user.password}"): RedirectResponse(Ranks().redirect(user.rank if user else "guest"), status_code=status.HTTP_302_FOUND),
             not user: "Пользователь не найден",
             not check_password(
                 password=password,
