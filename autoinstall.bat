@@ -91,6 +91,7 @@ set "PYTHON=C:\Program Files\Python314\python.exe"
 "%GIT%" clone https://github.com/dAspergillusb/egeTests
 
 cd egeTests
+mkdir files
 "%PYTHON%" -m venv venv
 
 set "VENV_PYTHON=%USER_DIR%/egeTests/venv/Scripts/python.exe"
