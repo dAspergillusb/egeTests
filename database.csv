@@ -1,3 +1,4 @@
 firstname;lastname;sex;school_class;username;password;rank
 Admin;;;;admin;admin;admin
 Teacher;;;;teacher;teacher;teacher
+Test;User;no sex;11Z;user;user;student
