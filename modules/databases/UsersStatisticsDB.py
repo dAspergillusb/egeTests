@@ -8,8 +8,6 @@ from sqlalchemy import (
     String,
     Select,
     ForeignKey,
-    or_,
-    and_,
     Row,
     TextClause
 )
