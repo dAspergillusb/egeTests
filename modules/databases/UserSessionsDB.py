@@ -91,6 +91,17 @@ class UserSessionsDB:
                 return result.scalar_one_or_none()
         return None
 
+    async def get_user_sessions(self, user_id: int, user_agent: str, ip_address: str) -> tuple[UserSessions | None]:
+        async with self.session() as session:
+            statement: Select[tuple[UserSessions]] = select(UserSessions).where(
+                UserSessions.user_id == user_id,
+                UserSessions.user_agent == user_agent,
+                UserSessions.ip_address == ip_address,
+                UserSessions.expire_date < datetime.now(tz=timezone.utc)
+            )
+            result: Result[tuple[UserSessions]] = await session.execute(statement)
+            return tuple(result.scalars().all())
+
     async def get_active_sessions(self, *, current_session_id: str = "") -> list[dict[str, Any]]:
         async with self.session() as session:
             statement = select(Users, UserSessions).join(UserSessions)
