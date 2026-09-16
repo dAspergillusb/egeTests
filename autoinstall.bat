@@ -103,4 +103,4 @@ echo [1 из 3] Обновление pip внутри venv
 echo [2 из 3] Установка зависимостей из requirements.txt
 %VENV_PIP% install -r "%USER_DIR%/egeTests/requirements.txt"
 echo [3 из 3] Запускаем egeTests
-%FASTAPI% fastapi dev main.py
+%FASTAPI% dev main.py
