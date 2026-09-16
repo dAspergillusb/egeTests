@@ -7,8 +7,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
-    <meta name="generator" content="Hugo 0.122.0">
+    <meta name="author" content="Nikita Zelentsov with Bootstrap help">
     <title>Тест</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">
@@ -144,7 +143,7 @@
                       {{ num }}
                     </button>
                     {% else %}
-                    <button id="{{ variant[num].q_number }}" name="navButton" type="button" class="btn btn-outline-primary" onclick="getQuestionData('{{ num }}')">
+                    <button id="{{ num }}" name="navButton" type="button" class="btn btn-outline-primary" onclick="getQuestionData('{{ num }}')">
                       {{ num }}
                     </button>
                     {% endif %}
@@ -257,6 +256,27 @@
                 console.log(result['q_number']);
                 showHideInf(qNum);
                 putQuestionData(result);
+                let beforeNavButton = document.querySelector('button[data-id="active"]');
+                if (beforeNavButton) {
+                    if (document.startTime) {
+                        try {
+                            await fetch('{{ url_for("save_question_time") }}', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    q_number: beforeNavButton.id.toString(),
+                                    spent_time: ((performance.now() - document.startTime) / 1000).toFixed()
+                                })
+                            });
+                        } catch (error) {
+                            console.log(error);
+                        }
+                    }
+                    beforeNavButton.dataset.id = '';
+                }
+                let navButton = document.getElementById(qNum);
+                navButton.dataset.id = 'active';
+                document.startTime = performance.now();
             };
         } catch (error) {
             console.log(error);
@@ -265,8 +285,8 @@
     </script>
     <script>
         async function sendAnswer(inputName, divId) {
-            var inputNodeList = document.getElementsByName(inputName)
-            var inputValue = Array.from(inputNodeList).map(node => node.value)
+            let inputNodeList = document.getElementsByName(inputName)
+            let inputValue = Array.from(inputNodeList).map(node => node.value)
             try {
                 const response = await fetch('{{ url_for("get_answer") }}', {
                     method: 'post',
@@ -279,21 +299,36 @@
                     createAlert(divId, result);
                 } else {
                     createAlert(divId);
-                };
+                }
             } catch (error) {
                createAlert(divId);
                console.log(error)
-            };
+            }
             setTimeout(function() {
-                var button = document.getElementById('button');
-                var mainDiv = document.getElementById('mainDiv');
+                let button = document.getElementById('button');
+                let mainDiv = document.getElementById('mainDiv');
                 if (button) {
                     button.click();
-                };
+                }
                 if (mainDiv) {
                     mainDiv.remove();
-                };
+                }
             }, 3000);
-        };
+            let beforeNavButton = document.querySelector('button[data-id="active"]');
+                if (beforeNavButton) {
+                    try {
+                        await fetch('{{ url_for("save_question_time") }}', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                q_number: beforeNavButton.id.toString(),
+                                spent_time: ((performance.now() - document.startTime) / 1000).toFixed()
+                            })
+                        });
+                    } catch (error) {
+                        console.log(error);
+                    }
+                }
+        }
     </script>
 </html>

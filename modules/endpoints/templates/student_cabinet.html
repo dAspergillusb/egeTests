@@ -8,8 +8,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
-    <meta name="generator" content="Hugo 0.122.0">
+    <meta name="author" content="Nikita Zelentsov with Bootstrap help">
     <title>Подготовка к тесту</title>
 
     <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/sign-in/">
@@ -21,6 +20,38 @@
 <link href="/static/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+      .btn-types {
+        /* Переменные для обычного состояния */
+        --bs-btn-bg: rgb(240 240 240 / 0);           /* Цвет фона */
+        --bs-btn-border-color: #c8c8c8;  /* Цвет рамки */
+        --bs-btn-color: unset;         /* Цвет текста */
+        --bs-btn-border-radius: 12px;    /* Скругление углов */
+        --bs-btn-padding-y: 10px;        /* Внутренний отступ сверху/снизу */
+        --bs-btn-padding-x: 20px;        /* Внутренний отступ слева/справа */
+        --bs-btn-font-weight: 600;       /* Жирность шрифта */
+
+        /* Переменные для состояния при наведении (Hover) */
+        --bs-btn-hover-bg: unset;
+        --bs-btn-hover-border-color: #aa0000;
+        --bs-btn-hover-color: unset;
+      }
+
+      .btn-clicked {
+        border-color: #aa0000 !important;
+      }
+
+      .btn-move-up {
+        /* Задаем плавность для всех изменений (включая трансформацию и тени) */
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      }
+
+      .btn-move-up:hover {
+        /* Смещаем элемент по оси Y на 4 пикселя вверх */
+        transform: translateY(-2px);
+        /* Добавляем или усиливаем тень, чтобы подчеркнуть отрыв от поверхности */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      }
+
       .bd-placeholder-img {
         font-size: 1.125rem;
         text-anchor: middle;
@@ -123,173 +154,211 @@
 <div class="container-fluid h-90">
   <div class="row">
     <!-- Sidebar Menu -->
-    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapsing collapse h-100" data-bs-toggle="collapse" id="navigation">
-        <div class="align-items-start">
-          <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-            <button class="nav-link active" id="com-stat" data-bs-toggle="pill" data-bs-target="#common-statistics" type="button" role="tab" aria-controls="common-statistics" aria-selected="true">Диаграммы</button>
-            <button class="nav-link" id="q-stat" data-bs-toggle="pill" data-bs-target="#questions-statistics" type="button" role="tab" aria-controls="questions-statistics" aria-selected="false">Гистограммы</button>
-            <button class="nav-link" id="tests" data-bs-toggle="pill" data-bs-target="#oldTests" type="button" role="tab" aria-controls="oldTests" aria-selected="false">Мои пройденные тесты</button>
-          </div>
+    <nav class="col-md-3 col-lg-1 d-md-block sidebar collapse collapse-horizontal position-fixed start-0" style="width: 200px; z-index: 1;" data-bs-toggle="collapse" id="navigation">
+        <div class="align-items-start" style="max-height: 90vh; min-height: 300px">
+            <div class="overflow-auto mb-2" style="max-height: 75vh;">
+                <div class="btn-group-vertical mb-4 bg-light" role="group" aria-label="" id="navButtons">
+                    <button data-id="1" name="navButton" type="button" class="btn btn-primary">
+                      Обзор
+                    </button>
+                    <button data-id="2" name="navButton" type="button" class="btn btn-outline-primary">
+                      История тестов
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
     <!-- Main content -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-        <div class="tab-content" id="v-pills-tabContent">
-          <div class="tab-pane fade show active" id="common-statistics" role="tabpanel" aria-labelledby="com-stat">
-            <p class="h4 lh-base mb-2">
-              Статистика ученика в виде круговых диаграмм:
-            </p>
-            <div class="row row-cols-3">
-            {% for i in range(len(labels)) %}
-              <div class="col mb-4">
-                <div class="card">
-                  <canvas id="{{ labels[i] }}" style="display: block; box-sizing: border-box;"></canvas>
-                  <div class="card-body">
-                    <h5 class="card-title">{{ labels[i] }}</h5>
-                    <p class="card-text">
-                      <p>Точность попадания: {{ accuracy_persent_values[i] }}%</p>
-                      <p>Вывод: {{ conclusions_for_results[i] }}</p>
-                    </p>
-                  </div>
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-1">
+        <div class="container" id="forData">
+          <h2 class="fw-bold h2">Статистика Решений</h2>
+          <h6 class="fw-medium h6 mb-4" style="color: darkgrey">Результаты по всем типам заданий</h6>
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-xl-4 g-4 mb-4">
+            <div class="col">
+              <div class="card border-success" style="background-color: #fafafa; height: 17vh">
+                <div class="card-body d-flex flex-column justify-content-center">
+                  <h6 class="card-title" style="color: #646464">Средний результат</h6>
+                  <p class="card-text h2 fw-bold">71%</p>
+                  <h6 class="card-text text-success">Неплохой результат</h6>
                 </div>
-                <script>
-                const data{{ labels[i].split()[-1] }} = {
-                  labels: [
-                    'Количество правильных ответов',
-                    'Количество ошибок'
-                  ],
-                  datasets: [{
-                    data: [{{ right_answers_values[i] }}, {{ common_values[i] - right_answers_values[i] }} ],
-                    backgroundColor: [
-                      'rgb(125, 200, 130)',
-                      'rgb(54, 162, 235)'
-                    ],
-                    hoverOffset: 4
-                  }]
-                };
-                const doughnut{{ labels[i].split()[-1] }} = document.getElementById('{{ labels[i] }}')
-                new Chart(doughnut{{ labels[i].split()[-1] }}, {
-                  type: 'doughnut',
-                  data: data{{ labels[i].split()[-1] }},
-                  options: {
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: 'top',
-                      },
-                      title: {
-                        display: true,
-                        text: '{{ labels[i] }}'
-                      }
-                    }
-                  },
-                });
-              </script>
               </div>
-            {% endfor %}
+            </div>
+            <div class="col">
+              <div class="card border-warning" style="background-color: #fafafa; height: 17vh">
+                <div class="card-body d-flex flex-column justify-content-center">
+                  <h6 class="card-title" style="color: #646464">Решено заданий</h6>
+                  <p class="card-text h2 fw-bold">156</p>
+                  <h6 class="card-text text-warning">Нужно больше тренироваться</h6>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card border-warning" style="background-color: #fafafa; height: 17vh">
+                <div class="card-body d-flex flex-column justify-content-center">
+                  <h6 class="card-title" style="color: #646464">Среднее время теста</h6>
+                  <p class="card-text h2 fw-bold">3:30</p>
+                  <h6 class="card-text text-warning">Нужно оставить себе задел</h6>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card border-danger" style="background-color: #fafafa; height: 17vh">
+                <div class="card-body d-flex flex-column justify-content-center">
+                  <h6 class="card-title" style="color: #646464">Зоны риска</h6>
+                  <p class="card-text h2 fw-bold">10</p>
+                  <h6 class="card-text" style="color: #c92042">Нужна дополнительная практика</h6>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="tab-pane fade" id="questions-statistics" role="tabpanel" aria-labelledby="q-stat">
-            <p class="h4 lh-base mb-2">
-              Статистика ученика в виде гистограмм:
-            </p>
-            <div style="width:80%;"><canvas id="q-statistics" width="400" height="200" aria-label="questions-type-statistics" role="img"></canvas></div>
-            <div style="width:80%;"><canvas id="p-statistics" width="400" height="200" aria-label="questions-type-statistics" role="img"></canvas></div>
-          </div>
-          <div class="tab-pane fade" id="oldTests" role="tabpanel" aria-labelledby="tests">
-            <p class="h4 lh-base mb-2">
-              Список решаемых вами вариантов:
-            </p>
-            <div class="accordion" id="dailyStat">
-              {% for date in daily_statistics %}
-              <div class="accordion-item">
-                <h2 class="accordion-header">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{ date }}" aria-expanded="false" aria-controls="collapseOne">
-                    {{ date }}
-                  </button>
-                </h2>
-                <div id="{{ date }}" class="accordion-collapse collapse" data-bs-parent="#dailyStat">
-                  <div class="accordion-body">
-                    <div class="container-fluid">
-                      {% for hour_min in daily_statistics.get(date) %}
-                      <form action="{{ url_for('get_old_test_page', date=date, time=hour_min) }}" method="post">
-                        <button
-                                formtarget="_blank"
-                                type="submit"
-                                class="btn btn-primary ms-4"
-                                id="{{ hour_min }}"
-                        >{{ hour_min }}</button>
-                      </form>
-                      {% endfor %}
-                    </div>
+          <div class="row row-cols-xl-2 row-cols-md-1 g-4 mb-4">
+            <div class="col-12 col-xl-8">
+              <div class="card" style="background-color: #fafafa; height: 45vh;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                  <h5 class="card-title">Динамика точности</h5>
+                  <h6 class="card-title" style="color: #646464; font-size: small">Средний процент верных решений по всем типам</h6>
+                  <div style="position: relative; width: 100%; max-width: 800px; max-height: 40vh; margin: 0 auto;">
+                    <canvas id="percents" aria-label="questions-type-statistics" role="img"></canvas>
                   </div>
                 </div>
               </div>
-              {% endfor %}
             </div>
+            <div class="col-12 col-xl-4">
+              <div class="card" style="background-color: #fafafa; height: 45vh;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                  <h5 class="card-title">Освоение типов</h5>
+                  <h6 class="card-title" style="color: #646464; font-size: small">По уровню точности</h6>
+                  <div style="position: relative; max-width: 300px; margin: 0 auto;">
+                    <canvas id="accuracy" aria-label="questions-type-statistics" role="img"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card mb-4" style="background-color: #fafafa;">
+            <div class="card-body d-flex flex-column justify-content-center">
+              <h5 class="card-title">Успешность по типам заданий</h5>
+              <h6 class="card-title" style="color: #646464; font-size: small">Нажмите на карточку, чтобы посмотреть распределение времени</h6>
+              <div id="buttons" class="">
+              </div>
+            </div>
+          </div>
+          <div class="row cols-xl-2 row-cols-md-1 g-4 mb-4">
+
           </div>
         </div>
-      <br>
-      <script>
-        const qStat = document.getElementById('q-statistics');
-        new Chart(qStat, {
-          type: 'bar',
-          data: {
-            labels: {{  labels | safe  }},
-            datasets: [{
-              label: "Число решённых заданий",
-              data: {{  common_values | safe  }},
-              borderWidth: 1
-            },
-            {
-              label: "Число правильных ответов",
-              data: {{ right_answers_values | safe }},
-              borderWidth: 1
-            }]
-          },
-          options: {
-            plugins: {
-              title: {
-                display: true,
-                text: 'Статистика по каждому типу задания',
-                font: {
-                  size: 30
-                },
-              },
-            },
-          }
-        });
-      </script>
-      <script>
-        const pStat = document.getElementById('p-statistics');
-        new Chart(pStat, {
-          type: 'bar',
-          data: {
-            labels: {{  labels | safe  }},
-            datasets: [{
-              label: "Частота выполнения типа задания",
-              data: {{  accuracy_persent_values | safe  }},
-              borderWidth: 1
-            }
-            ]
-          },
-          options: {
-            plugins: {
-              title: {
-                display: true,
-                text: 'Статистика по частоте выполнения для каждого типа задания',
-                font: {
-                  size: 30
-                },
-              },
-            },
-          }
-        });
-      </script>
     </main>
   </div>
 </div>
+  <script>
+    let buttons = document.getElementById("buttons");
+    for (let i = 1; i <= 27; i++) {
+      let button = `
+        <button class="btn btn-types btn-move-up mb-2 ps-2" aria-pressed="false">
+          <label class="pe-none d-flex justify-content-between align-items-center w-100">
+            <b style="color:black; font-size: smaller">№${i}</b>
+            <label style="font-size: smaller">78%</label>
+          </label>
+          <label class="pe-none progress" style="height: 10px;" role="progressbar" aria-valuemin="0" aria-valuenow="50" aria-valuemax="100">
+            <a class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width: 50%;"></a>
+          </label>
+          <label class="pe-none" style="font-size: smaller; color: gray;">Кодирование</label>
+        </button>
+      `;
+      buttons.insertAdjacentHTML("beforeend", button);
+    }
+    buttons.addEventListener("click", function (event) {
+      for (let button of buttons.children) {
+        button.classList.remove('btn-clicked');
+      }
+      let button = event.target;
+      button.classList.add('btn-clicked');
+    });
+  </script>
+  <script>
+    const percents = document.getElementById('percents');
+    const datasetPercents = {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [{
+        label: 'Проценты',
+        data: [0, 0, 15, 18, 25, 63, 48, 80, 90, 65, 78, 96],
+        borderColor: 'blue',
+        fill: false,
+        cubicInterpolationMode: 'monotone',
+        tension: 0.4
+      }]
+    };
+    new Chart(percents, {
+      type: 'line',
+      data: datasetPercents,
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2.5,
+        plugins: {
+
+        },
+        interaction: {
+          intersect: false,
+        },
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Значение'
+            },
+            suggestedMin: 0,
+            suggestedMax: 100
+          }
+        }
+      },
+    });
+  </script>
+  <script>
+    const accuracy = document.getElementById('accuracy');
+    const datasetAccuracy = {
+      labels: ['Освоено', 'В работе', 'Повторить', 'Нет данных'],
+      datasets: [{
+        label: '',
+        data: [13, 8, 5, 1],
+        backgroundColor: [
+                'rgb(73, 217, 35)',
+                'rgb(235, 226, 62)',
+                'rgb(237, 108, 66)',
+                'rgb(200, 200, 200)'
+        ],
+        hoverOffset: 4
+      }]
+    }
+        new Chart(accuracy, {
+          type: 'doughnut',
+          data: datasetAccuracy,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+              padding: {
+                top: 0,
+                bottom:0
+              },
+            },
+            plugins: {
+              legend: {
+                position: 'right',
+                align: 'center'
+              }
+            }
+          }
+        });
+  </script>
   <script src="/static/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
