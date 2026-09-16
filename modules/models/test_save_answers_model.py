@@ -14,3 +14,8 @@ class AnswerForCheck(BaseModel):
 
     def is_empty(self) -> bool:
         return "".join(self.answer) == ""
+
+class DataTimeInterval(BaseModel):
+    q_number: str = "",
+    spent_time: int = 0
+
