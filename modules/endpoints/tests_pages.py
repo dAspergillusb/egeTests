@@ -1,10 +1,22 @@
 from collections import defaultdict
+from collections.abc import Sequence
 from pprint import pprint
 from time import time
-from typing import Callable, Optional
-from fastapi import FastAPI, Request, Form, Depends, HTTPException, status, Cookie
+from typing import Callable, Optional, Annotated
+import json
+from fastapi import (
+    FastAPI,
+    Request,
+    Response,
+    Form,
+    Depends,
+    HTTPException,
+    status,
+    Cookie
+)
 from fastapi.responses import RedirectResponse, FileResponse
 from sqlalchemy.orm import Mapped
+from starlette.responses import HTMLResponse
 from starlette.templating import _TemplateResponse
 from sqlalchemy import Column, Integer
 from .._types.Types import Ranks
@@ -13,12 +25,21 @@ from ..databases.InformaticsDB import Informatics, InformaticsDB
 from ..databases.ActiveStudentsTest import ActiveStudentsTest, ActiveStudentsTestDB
 from ..databases.UsersStatisticsDB import UsersStatisticsDB, UsersStatistics
 from ..databases.UserSessionsDB import UserSessionsDB, UserSessions
-from ..functions.dependencies import Roles
+from ..functions.dependencies import (
+    Roles,
+    get_informatics_variant_from_cookies,
+    get_start_stop_test
+)
 from ..models.test_result_model import TestResultData
 from ..models.test_type_model import TestVarOne, TestVarTwo, TestVarThree
-from ..models.test_save_answers_model import AnswerForSave, AnswerForCheck
+from ..models.test_save_answers_model import AnswerForSave, AnswerForCheck, DataTimeInterval
 from ..models.for_question_data import ForQuestionData
-from .config import TOPICS_FOR_PROBLEM_TYPES, env_settings
+from .config import (
+    TOPICS_FOR_PROBLEM_TYPES,
+    env_settings,
+    TOPICS_FOR_STUDENT_CABINET,
+    SECURED
+)
 from ..functions.database_operations import (
     check_one_point_problem,
     check_two_points_problem,
@@ -97,7 +118,8 @@ def register_tests_pages(app: FastAPI) -> None:
         }
         common_statistics["result"] = absolute_conclusion_for_result.get(True, "Нет данных")
 
-        daily_statistics: dict[str, defaultdict[str, list[type[Informatics]]]] = await DailyStatisticsDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_daily_statistics_for_student(user_id=user_id)
+        daily_statistics, accuracies = await DailyStatisticsDB(
+            db_name=env_settings.MAIN_DB_USERS_NAME).get_daily_statistics_for_student(user_id=user_id)
         return TEMPLATES.TemplateResponse(
             request=request,
             name="student_cabinet.html",
@@ -105,6 +127,7 @@ def register_tests_pages(app: FastAPI) -> None:
                 "request": request,
                 "name": name,
                 # "school_class": school_class,
+                "topics": enumerate(TOPICS_FOR_STUDENT_CABINET, start=1),
                 "common_statistics": common_statistics,
                 "labels": [f"Тип {num}" for num in range(1, 28)],
                 "common_values": common_values,
@@ -118,33 +141,21 @@ def register_tests_pages(app: FastAPI) -> None:
         )
 
 
-    @app.get("/prepare_test", response_model=None)
+    @app.get("/prepare_test")
     async def get_page_prepare_test(
             request: Request,
             name: str = Depends(all_allowed),
             user_id: Optional[int] = Cookie(None),
+            ast_id: int = Cookie(None),
             rank: Optional[str] = Cookie(None),
             session_id: Optional[str] = Cookie(None)
-    ) -> _TemplateResponse | RedirectResponse:
-        if request.session.get("informatics_variant"):
-            request.session.__delitem__("informatics_variant")
-        # user_id: int = request.session.get("user_id", 0)
-        # school_class: str = request.session.get("school_class", "")
+    ) -> Response:
         modal_old_test_session: bool = False
-
-        current_session: type[UserSessions] | None = await UserSessionsDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_session(session_id=session_id) #TODO
-        old_test_session: ActiveStudentsTest | None = await check_test_session(session_id=current_session.session_id)
-        if old_test_session:
-            request.session["old_test_session"] = old_test_session.ast_id
-            request.session["stop_test"] = old_test_session.stop_time
-            request.session["informatics_variant"] = old_test_session.test
-            modal_old_test_session = not modal_old_test_session
-
+        if ast_id:
+            return RedirectResponse("/testing")
         topics_problems_types: dict[int, str] = {
             num: topic for num, topic in enumerate(TOPICS_FOR_PROBLEM_TYPES, start=1)
         }
-        # informatics: dict[Column[Integer], Type[Informatics]] = get_test_var()
-        # request.session["informatics_variant"] = "&".join(f"{informatics[question].q_id}" for question in informatics)
         return TEMPLATES.TemplateResponse(
             request=request,
             name="/test_pages/choose_test_type.html",
@@ -152,7 +163,6 @@ def register_tests_pages(app: FastAPI) -> None:
                 "request": request,
                 "name": name,
                 "rank": rank,
-                # "school_class": school_class,
                 "topics_problems_types": topics_problems_types,
                 'old_session': modal_old_test_session,
                 "nav_topic": "Выбор варианта генерации теста",
@@ -166,7 +176,7 @@ def register_tests_pages(app: FastAPI) -> None:
             data_for_test: TestVarOne | TestVarTwo | TestVarThree = Form(default=None),
             rank: Optional[str] = Cookie(None),
             name: str = Depends(all_allowed)
-    ) -> _TemplateResponse:
+    ) -> HTMLResponse:
         school_class: str = request.session.get("school_class", "")
         what_type_of_test: dict[bool, Callable] = {
             isinstance(data_for_test, TestVarOne): get_test_var_one,
@@ -177,14 +187,12 @@ def register_tests_pages(app: FastAPI) -> None:
         if not informatics:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Похоже, что в базе нет ни одного вопроса. Попроси администратора или учителя добавть вопросы."
+                detail="Похоже, что в базе нет ни одного вопроса. Попроси администратора или учителя добавить вопросы."
             )
-        informatics_to_session = {
+        informatics_to_session: dict[int, int] = {
             num: informatics[question].q_id for num, question in enumerate(informatics, start=1)
         }
-        request.session["informatics_variant"] = informatics_to_session
-        # pprint([name, [(informatics[x].q_id, informatics[x].q_right_answer) for x in informatics]])
-        return TEMPLATES.TemplateResponse(
+        response: HTMLResponse = TEMPLATES.TemplateResponse(
             request=request,
             name="/test_pages/generated_test_rewrite.html",
             context={
@@ -196,71 +204,94 @@ def register_tests_pages(app: FastAPI) -> None:
                 "nav_topic": "Вариант теста готов"
             }
         )
+        response.set_cookie(
+            key="informatics_variant",
+            value=json.dumps(informatics_to_session),
+            httponly=True,
+            secure=SECURED,
+            samesite="lax"
+        )
+        return response
 
     @app.post("/exam")
     async def get_start_exam_page(
             request: Request,
             rank: Optional[str] = Cookie(None),
             name: str = Depends(all_allowed),
-    ) -> _TemplateResponse:
-        school_class: str = request.session.get("school_class", "")
+    ) -> HTMLResponse:
         informatics: dict[Mapped[int] | int, Informatics] = await get_test_var_exam()
-        informatics_to_session = {
+        informatics_to_session: dict[int, int] = {
             num: informatics[question].q_id for num, question in enumerate(informatics, start=1)
         }
-        request.session["informatics_variant"] = informatics_to_session
-        return TEMPLATES.TemplateResponse(
+        response: HTMLResponse = TEMPLATES.TemplateResponse(
             request=request,
             name="/test_pages/generated_test_rewrite.html",
             context={
                 "request": request,
                 "name": name,
                 "rank": rank,
-                "school_class": school_class,
+                # "school_class": school_class,
                 "variant": informatics_to_session,
                 "nav_topic": "Вариант теста готов"
             }
         )
+        response.set_cookie(
+            key="informatics_variant",
+            value=json.dumps(informatics_to_session),
+            httponly=True,
+            secure=SECURED,
+            samesite="lax"
+        )
+        return response
 
-    @app.get("/testing", response_model=None)
+    @app.get("/testing")
     async def test_is_started(
             request: Request,
-            user_id: Optional[int] = Cookie(None),
-            session_id: Optional[str] = Cookie(None),
-            rank: Optional[str] = Cookie(None),
+            informatics_variant: Annotated[dict[int, int], Depends(get_informatics_variant_from_cookies)],
+            start_stop_test: Annotated[dict[str, int], Depends(get_start_stop_test)],
             name: str = Depends(all_allowed),
-    ) -> _TemplateResponse | RedirectResponse:
-        # user_id: int = request.session.get("user_id", 0)
+            ast_id: int = Cookie(None),
+            rank: Optional[str] = Cookie(None),
+            user_id: Optional[int] = Cookie(None),
+            session_id: Optional[str] = Cookie(None)
+    ) -> Response:
+        if not session_id or not user_id:
+            return RedirectResponse("/", status_code=status.HTTP_403_FORBIDDEN)
+        if not informatics_variant:
+            return RedirectResponse("/prepare_test")
+
         database: InformaticsDB = InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME)
-        questions_ids: dict[int, int] = request.session["informatics_variant"]
         informatics: dict[int, type[Informatics] | None] = {
-            num: await database.get_question(_id) for num, _id in questions_ids.items()
+            num: await database.get_question(_id) for num, _id in informatics_variant.items()
         }
+
         max_question_number: int = max(informatics)
-        if all((not request.session.get("start_test"), not request.session.get("stop_test"))):
+        if not start_stop_test:
             start_time: int = int(time())
             stop_time: int = start_time + get_time_of_test([question.q_number for question in informatics.values()])
-            request.session["start_test"] = start_time
-            request.session["stop_test"] = stop_time
+            start_stop_test: dict[str, int] = {
+                "start_test": start_time,
+                "stop_test": stop_time
+            }
             test_time: int = stop_time - start_time
         else:
-            test_time: int = request.session.get("stop_test", 0) - int(time())
+            test_time: int = start_stop_test.get("stop_test", 0) - int(time())
 
         active_test_session: type[ActiveStudentsTest] | None = None
-        ast_id: int = request.session.get("old_test_session", 0)
         if not ast_id:
-            active_session: type[UserSessions] | None = await UserSessionsDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_session(session_id=session_id)
-            request.session["old_test_session"] = await start_test_session(
+            active_user_session: type[UserSessions] | None = await UserSessionsDB(
+                db_name=env_settings.MAIN_DB_USERS_NAME).get_session(session_id=session_id)
+            ast_id: int = await start_test_session(
                 user_id=user_id,
-                session_id=active_session.session_id,
-                stop_time=request.session.get('stop_test', -1),
-                test=request.session.get('informatics_variant', {})
+                session_id=active_user_session.session_id,
+                stop_time=start_stop_test.get("stop_test", 0), #TODO
+                test=informatics_variant
             )
         else:
-            active_test_session = await ActiveStudentsTestDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_test_session(ast_id=ast_id)
+            active_test_session = await ActiveStudentsTestDB(
+                db_name=env_settings.MAIN_DB_USERS_NAME).get_test_session(ast_id=ast_id)
 
-        print(request.session.get("old_test_session"))
-        return TEMPLATES.TemplateResponse(
+        response: HTMLResponse = TEMPLATES.TemplateResponse(
             request=request,
             name="/test_pages/generated_test_started_rewrite.html",
             context={
@@ -276,37 +307,51 @@ def register_tests_pages(app: FastAPI) -> None:
                 "nav_topic": "Успешного решения теста"
             }
         )
+        response.set_cookie(
+            key="start_stop_test",
+            value=json.dumps(start_stop_test),
+            httponly=True,
+            secure=SECURED,
+            samesite="lax"
+        )
+        response.set_cookie(
+            key="ast_id",
+            value=str(ast_id),
+            httponly=True,
+            secure=SECURED,
+            samesite="lax"
+        )
+        return response
 
     @app.post("/answer")
     async def get_answer(
             request: Request,
-            answer: AnswerForSave | AnswerForCheck
+            answer_data: AnswerForSave | AnswerForCheck,
+            ast_id: int = Cookie(None)
     ):
-        print(type(answer), answer.answer)
-        if answer.is_empty():
+        if answer_data.is_empty():
             return False
-        if isinstance(answer, AnswerForSave):
+        if isinstance(answer_data, AnswerForSave):
             is_saved: bool = await save_answer_for_session(
-                ast_id=request.session.get("old_test_session", 0),
-                q_num=answer.q_num[2:],
-                answer=answer.answer
+                ast_id=ast_id,
+                q_num=answer_data.q_num[2:],
+                answer=answer_data.answer
             )
             return True if is_saved else False
 
-        print(answer.q_from_old_test, answer.answer)
-        question: type[Informatics] | None = await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).get_question(int(answer.q_from_old_test))
+        question: type[Informatics] | None = await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).get_question(int(answer_data.q_from_old_test))
         q_number: int = question.q_number
         if not q_number:
-            return None
+            return False
         check_results: dict[bool, int] = {
             q_number < 26: check_one_point_problem(
                 correct_answer=question.q_right_answer.split("&"),
-                answer=answer.answer
+                answer=answer_data.answer
             ),
             q_number >= 26: check_two_points_problem(
                 q_number=question.q_number,
                 correct_answer=question.q_right_answer.split("&"),
-                answer=answer.answer
+                answer=answer_data.answer
             )
         }
         return check_results[True] if not check_results[True] else check_results[True] + 1 if q_number < 26 else check_results[True] #!TODO
@@ -314,19 +359,35 @@ def register_tests_pages(app: FastAPI) -> None:
     @app.post("/question_data")
     async def get_question_data(
             request: Request,
-            for_question: ForQuestionData
+            for_question: ForQuestionData,
+            ast_id: int = Cookie(None)
     ):
-        active_user_session: int = request.session.get("old_test_session", 0)
-        if active_user_session:
-            active_session: type[ActiveStudentsTest] | None = await ActiveStudentsTestDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_test_session(ast_id=active_user_session)
-            # print(f"{active_session=}")
+        print(ast_id)
+        if ast_id:
+            active_session: type[ActiveStudentsTest] | None = await ActiveStudentsTestDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_test_session(ast_id=ast_id)
+            print(active_session.test)
             question_id: int = active_session.test[for_question.q_num]
             needed_question_data: type[Informatics] | None = await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).get_question(question_id)
             needed_question_data.q_right_answer = len(needed_question_data.q_right_answer.split("&"))
             needed_question_data.answers = active_session.answers[for_question.q_num]
-            # print(active_session.answers[for_question.q_num])
             return needed_question_data
         return ""
+
+    @app.post("/question_time")
+    async def save_question_time(
+            request: Request,
+            data_to_interval: DataTimeInterval,
+            ast_id: int = Cookie(None),
+            _ = Depends(all_allowed)
+    ):
+        if ast_id:
+            await ActiveStudentsTestDB(
+                db_name=env_settings.MAIN_DB_USERS_NAME
+            ).add_interval_problem(
+                ast_id=ast_id,
+                q_number=data_to_interval.q_number,
+                interval=data_to_interval.spent_time
+            )
 
     @app.post("/old_test/{date}/{time}")
     async def get_old_test_page(
@@ -356,44 +417,45 @@ def register_tests_pages(app: FastAPI) -> None:
         path: str = f"/files/{problem_num}/{filename}"
         return FileResponse(path=path, filename=filename)
 
-    @app.post("/delete_old_test_session")
-    async def remove_old_test_session(request: Request):
-        # print(request.session)
-        old_test_session_id: int = request.session.get("old_test_session", 0)
-        await delete_old_test_session(ast_id=old_test_session_id)
-        request.session.pop("old_test_session")
-        if request.session.get("stop_test"):
-            request.session.pop("stop_test")
-        if request.session.get("start_test"):
-            request.session.pop("start_test")
-        # print(request.session)
+    # @app.post("/delete_old_test_session")
+    # async def remove_old_test_session(request: Request):
+    #     # print(request.session)
+    #     old_test_session_id: int = request.session.get("old_test_session", 0)
+    #     await delete_old_test_session(ast_id=old_test_session_id)
+    #     request.session.pop("old_test_session")
+    #     if request.session.get("stop_test"):
+    #         request.session.pop("stop_test")
+    #     if request.session.get("start_test"):
+    #         request.session.pop("start_test")
+    #     # print(request.session)
 
     @app.post("/test_results")
     async def get_test_results(
             request: Request,
             test_data: TestResultData = Form(default=""),
+            ast_id: int = Cookie(None),
             user_id: Optional[int] = Cookie(None),
             rank: Optional[str] = Cookie(None),
             name: str = Depends(all_allowed)
-    ) -> _TemplateResponse:
-        active_user_session: type[ActiveStudentsTest] | None = await ActiveStudentsTestDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_test_session(
-            ast_id=request.session.get("old_test_session", 0)
+    ) -> HTMLResponse:
+        active_user_session: type[ActiveStudentsTest] | None = await ActiveStudentsTestDB(
+            db_name=env_settings.MAIN_DB_USERS_NAME).get_test_session(
+            ast_id=ast_id
         )
         if not active_user_session:
             return RedirectResponse(url="/prepare_test")
-        print(active_user_session.answers)
-        # rank: str = request.session.get("rank", "")
+        accuracy: dict[str, float | int] = {
+            "test_time": (int(time()) - active_user_session.start_time)
+        }
         answers: dict[str, list[str]] = {
             q_num: answer.split("$") for q_num, answer in active_user_session.answers.items()
         }
-        # answers: dict[str, list[str]] = test_data.to_dict()
         variant: list[int] = list(active_user_session.test.values())
-        # variant: list[int] = list(map(int, request.session["informatics_variant"].split("&")))
-        pprint(variant)
-        results, mark, for_statistics = await check_test_variant(
+        results, mark, for_statistics, data_accuracies = await check_test_variant(
                     variant=variant,
                     answers=answers
         )
+        accuracy.update(data_accuracies)
         if rank == Ranks.STUDENT:
             await update_statistics_to_student(
                 user_id=user_id,
@@ -402,18 +464,14 @@ def register_tests_pages(app: FastAPI) -> None:
             await save_daily_statistics(
                 user_id=user_id,
                 checked_test=variant,
-                answers_and_marks=results
+                answers_and_marks=results,
+                intervals=active_user_session.problem_type_intervals,
+                accuracy=accuracy
             )
         await delete_old_test_session(
-            ast_id=request.session.get("old_test_session", 0)
+            ast_id=ast_id
         )
-        request.session.pop("old_test_session")
-        if request.session.get("stop_test"):
-            request.session.pop("stop_test")
-        if request.session.get("start_test"):
-            request.session.pop("start_test")
-        pprint([name, mark.split("&")])
-        return TEMPLATES.TemplateResponse(
+        response: HTMLResponse = TEMPLATES.TemplateResponse(
             request=request,
             name="/test_pages/testing_result.html",
             context={
@@ -425,4 +483,24 @@ def register_tests_pages(app: FastAPI) -> None:
                 "nav_topic": "Результаты"
             }
         )
+        response.delete_cookie(
+            key="start_stop_test",
+            httponly=True,
+            secure=SECURED,
+            samesite="lax"
+        )
+        response.delete_cookie(
+            key="ast_id",
+            httponly=True,
+            secure=SECURED,
+            samesite="lax"
+        )
+        response.delete_cookie(
+            key="informatics_variant",
+            httponly=True,
+            secure=SECURED,
+            samesite="lax"
+        )
+
+        return response
 
