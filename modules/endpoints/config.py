@@ -30,7 +30,7 @@ DAILY_STATISTICS_DB_NAME = env_settings.DAILY_STATISTICS_DB_NAME
 ACTIVE_STUDENTS_TEST_DB_NAME = env_settings.ACTIVE_STUDENTS_TEST_DB_NAME
 INITIATED_DBS = env_settings.INITIATED_DBS
 
-# in production or at server type this property on True
+# in production or at server with https type this property on True
 SECURED: bool = False
 
 TOPICS_FOR_PROBLEM_TYPES: list[str] = [
@@ -140,3 +140,44 @@ TOPICS_FOR_ADMIN_CABINET: list[str] = [
     "Массовая работа с пользователями",
     "Работа с базами данных"
 ]
+
+TOPICS_FOR_STUDENT_CABINET: list[str] = [
+    "Обзор",
+    "История тестов"
+]
+
+EASY_PROBLEMS: set[int] = {
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    12
+}
+
+PROGRAMMING_PROBLEMS: set[int] = {
+    11,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+}
+
+HARD_PROBLEMS: set[int] = {
+    24,
+    25,
+    26,
+    27
+}
