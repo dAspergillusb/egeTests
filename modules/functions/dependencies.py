@@ -1,3 +1,5 @@
+import json
+
 from fastapi import HTTPException, Security, status, Request, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
@@ -35,6 +37,7 @@ class Roles:
             user_rank: str = payload.get("rank")
             username: str = payload.get("sub")
             session_id: str = payload.get("session_id")
+            name: str = payload.get("name")
 
             if username is None:
                 raise HTTPException(
@@ -72,7 +75,8 @@ class Roles:
                     data={
                         "sub": username,
                         "rank": user_rank,
-                        "session_id": new_session_id
+                        "session_id": new_session_id,
+                        "name": name
                     })
                 response.set_cookie(
                     key="access_token",
@@ -81,19 +85,24 @@ class Roles:
                     secure=SECURED,
                     samesite="lax"
                 )
-                return username
+                return name
 
         except jwt.ExpiredSignatureError:
             username: str = ""
+            name: str = ""
+            user_rank: str = ""
             user_id: int = int(request.cookies.get("user_id", 0))
             user: type[Users] | None = await UsersDB(db_name=env_settings.MAIN_DB_USERS_NAME).choose_user(user_id=user_id)
-            if user: username: str = user.username
-            user_rank: str = request.cookies.get("rank", "")
+            if user:
+                username: str = user.username
+                name: str = f"{user.firstname} {user.lastname}"
+                user_rank: str = user.rank
             session_id: str = request.cookies.get("session_id", "")
             if any((
                 not username,
                 not user_rank,
-                not session_id
+                not session_id,
+                not name
             )):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -103,7 +112,8 @@ class Roles:
                 data={
                     "sub": username,
                     "rank": user_rank,
-                    "session_id": session_id
+                    "session_id": session_id,
+                    "name": name
                 }
             )
             response.set_cookie(
@@ -113,7 +123,7 @@ class Roles:
                 secure=SECURED,
                 samesite="lax"
             )
-            return username
+            return name
         except jwt.InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -125,4 +135,21 @@ class Roles:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Недостаточно прав! Требуется роль администратора."
             )
-        return username
+        return name
+
+
+def get_informatics_variant_from_cookies(request: Request) -> dict[int, int]:
+    informatics_variant: str = request.cookies.get("informatics_variant", "")
+    if informatics_variant:
+        return json.loads(informatics_variant)
+    return {}
+
+
+async def get_start_stop_test(request: Request) -> dict[str, int]:
+    start_stop_test: dict[str, int] = json.loads(request.cookies.get("start_stop_test", "{}"))
+    if any((
+        not start_stop_test.get("start_test"),
+        not start_stop_test.get("stop_test"),
+    )):
+        return {}
+    return start_stop_test
