@@ -81,11 +81,12 @@ def register_main_endpoints(app: FastAPI) -> None:
             data={
                 "sub": username,
                 "rank": user.rank,
-                "session_id": session_id
+                "session_id": session_id,
+                "name": f"{user.firstname} {user.lastname}"
             })
         _response: RedirectResponse = if_user_mistake[True]
         # request.session["name"] = f"{user.firstname} {user.lastname}"
-        request.session["school_class"] = user.school_class
+        # request.session["school_class"] = user.school_class
         _response.set_cookie(
             key="user_id",
             value=str(user.user_id),
@@ -109,7 +110,7 @@ def register_main_endpoints(app: FastAPI) -> None:
             secure=SECURED,
             samesite="lax"
         )
-        if_user_mistake[True].set_cookie(
+        _response.set_cookie(
             key="access_token",
             value=f"Bearer {access_token}",
             httponly=True,
