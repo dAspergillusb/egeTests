@@ -40,6 +40,7 @@ class ActiveStudentsTest(BASE_USERS):
     stop_time: Mapped[int] = mapped_column(Integer)
     test: Mapped[dict[str, int]] = mapped_column(JSONB, default=dict)
     answers: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
+    problem_type_intervals: Mapped[dict[str, int]] = mapped_column(JSONB, default=dict)
 
     def __str__(self):
         return (
@@ -92,7 +93,7 @@ class ActiveStudentsTestDB:
             await connection.run_sync(BASE_USERS.metadata.create_all)
             print(f"Database initialized: {ActiveStudentsTest.__tablename__}")
 
-    async def new_test_session(self, *, session_data: dict[str, str | float | int | dict[int, int]]) -> int:
+    async def new_test_session(self, *, session_data: dict[str, str | float | int | dict[int, int] | dict[str, int]]) -> int:
         test_length: int = len(session_data.get("test", []))
         answers: dict[int, int] = {num: "0" for num in range(1, test_length + 1)}
         session_data["answers"] = answers
@@ -124,11 +125,15 @@ class ActiveStudentsTestDB:
                 "expired": session.stop_time - int(time()) < 0
             } for user, session in result.all()]
 
-    async def get_test_session_for_student(self, *, session_id: str) -> ActiveStudentsTest | None:
+    async def get_test_sessions_for_student(self, *, user_id: int, session_id: str) -> ActiveStudentsTest | None:
         async with self.session() as session:
-            statement: Select[tuple[ActiveStudentsTest]] = select(ActiveStudentsTest).where(ActiveStudentsTest.session_id == session_id)
+            statement: Select[tuple[ActiveStudentsTest]] = select(ActiveStudentsTest).where(
+                ActiveStudentsTest.user_id == user_id,
+                ActiveStudentsTest.session_id == session_id,
+                ActiveStudentsTest.stop_time - ActiveStudentsTest.start_time > 0
+            )
             result: Result[tuple[ActiveStudentsTest]] = await session.execute(statement)
-            return result.scalars().first()
+            return result.scalar_one_or_none()
 
     async def remove_test_session(self, *, ast_id: int) -> None:
         async with self.session() as session:
@@ -146,6 +151,14 @@ class ActiveStudentsTestDB:
                 await session.commit()
                 return True
         return False
+
+    async def add_interval_problem(self, *, ast_id: int, q_number: str, interval: int) -> None:
+        async with self.session() as session:
+            _session: type[ActiveStudentsTest] | None = await session.get(ActiveStudentsTest, ast_id)
+            if _session:
+                _session.problem_type_intervals[q_number] += interval
+                flag_modified(_session, "problem_type_intervals")
+                await session.commit()
 
     async def clear_table(self) -> None:
         async with self.session() as session:
