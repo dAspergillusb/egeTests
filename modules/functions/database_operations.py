@@ -21,7 +21,13 @@ from ..databases.ActiveStudentsTest import ActiveStudentsTest, ActiveStudentsTes
 from ..databases.ArchiveDatabasesDB import ArchiveDatabasesDB
 from ..models.test_creation_model import TestCreation, TestCreation1921
 from .files_operations import change_env_parameter, env_full_rewrite
-from ..endpoints.config import CORRECT_ANSWERS_VALUE_TO_POINTS, env_settings
+from ..endpoints.config import (
+    CORRECT_ANSWERS_VALUE_TO_POINTS,
+    EASY_PROBLEMS,
+    PROGRAMMING_PROBLEMS,
+    HARD_PROBLEMS,
+    env_settings
+)
 
 
 def get_mark_for_test(points_value: int, questions_value: int) -> str:
@@ -116,12 +122,15 @@ async def change_special_question(q_id: int, data_to_change: TestCreation1921) -
     return await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).change_special_question(data=new_data)
 
 
-async def check_test_variant(variant: list[int], answers: dict[str, list[str]]) -> tuple[dict[str, int], str, dict[str, list[int]]]:
+async def check_test_variant(variant: list[int], answers: dict[str, list[str]]) -> tuple[dict[str, int], str, dict[str, list[int]], dict[str, float | int]]:
     answers_and_marks: dict[str, int] = {}
     for_statistics: dict[str, list[int]] = {f"q_type_{num}": [0, 0] for num in range(1, 30 + 1)}
     db_informatics: InformaticsDB = InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME)
     different_problem_types_value: set[Mapped[int]] = set()
     checked_test: list[int] = []
+    easy_problems: list[int] = []
+    programming_problems: list[int] = []
+    hard_problems: list[int] = []
     q_count: count[int] = count(start=1)
     for q_id in variant:
         question: type[Informatics] | None = await db_informatics.get_question(q_id)
@@ -145,6 +154,12 @@ async def check_test_variant(variant: list[int], answers: dict[str, list[str]]) 
                 )
                 common_value, right_value = for_statistics.get(f"q_type_{q_type_number}")
                 for_statistics[f"q_type_{q_type_number}"] = [common_value + 1, right_value + (points / 2)]
+            if q_type_number in EASY_PROBLEMS:
+                easy_problems.append(points)
+            elif q_type_number in PROGRAMMING_PROBLEMS:
+                programming_problems.append(points)
+            else:
+                hard_problems.append(points)
             answers_and_marks.update({q_number_count: points})
 
     # It's need to remove questions that didn't be in test
@@ -155,17 +170,36 @@ async def check_test_variant(variant: list[int], answers: dict[str, list[str]]) 
     return (
         answers_and_marks,
         get_mark_for_test(points_value=points_value, questions_value=len(different_problem_types_value)),
-        for_statistics
+        for_statistics,
+        {
+            "easy_accuracy": sum(easy_problems) / len(easy_problems) if easy_problems else 0,
+            "programming_accuracy": sum(programming_problems) / len(programming_problems) if programming_problems else 0,
+            "hard_accuracy": sum(hard_problems) / len(hard_problems) if hard_problems else 0,
+            "final_result": points_value
+        }
     )
 
 
-async def save_daily_statistics(*, user_id: int, checked_test: list[int], answers_and_marks: dict[str, int]) -> None:
+async def save_daily_statistics(
+        *,
+        user_id: int,
+        checked_test: list[int],
+        answers_and_marks: dict[str, int],
+        intervals: dict[str, int],
+        accuracy: dict[str, int | float]
+) -> None:
     daily_statistics: DailyStatisticsDB = DailyStatisticsDB(db_name=env_settings.MAIN_DB_USERS_NAME)
     # print(user_id, checked_test, answers_and_marks, sep='\n')
-    new_daily_statistics: dict[str, str | int] = {
+    new_daily_statistics: dict[str, str | int | float | dict[str, int]] = {
         "user_id": user_id,
         "test": "&".join([f"{q_id}" for q_id in checked_test]),
-        "result": "&".join(f"{answer}" for answer in answers_and_marks.values())
+        "result": "&".join(f"{answer}" for answer in answers_and_marks.values()),
+        "test_time": accuracy.get("test_time", 0),
+        "problem_type_intervals": intervals,
+        "easy_accuracy": accuracy.get("easy_accuracy", 0),
+        "programming_accuracy": accuracy.get("programming_accuracy", 0),
+        "hard_accuracy": accuracy.get("hard_accuracy", 0),
+        "final_result": accuracy.get("final_result", 0)
     }
     await daily_statistics.add_statistics(statistics_data=new_daily_statistics)
 
@@ -306,17 +340,21 @@ async def start_test_session(*, user_id: int, session_id: str, stop_time: float 
             "user_id": user_id,
             "session_id": session_id,
             "stop_time": stop_time,
-            "test": test
+            "test": test,
+            "problem_type_intervals": {f"{num}": 0 for num in test}
         }
     )
     return session_id
 
 
-async def check_test_session(*, session_id: str) -> ActiveStudentsTest | None:
-    active_session: ActiveStudentsTest | None = await ActiveStudentsTestDB(db_name=env_settings.MAIN_DB_USERS_NAME).get_test_session_for_student(session_id=session_id)
-    if active_session:
-        return active_session
-    return None
+async def check_test_session(*, user_id: int, session_id: str) -> tuple[ActiveStudentsTest | None, ...]:
+    user_active_test_session: Sequence[ActiveStudentsTest | None] = await ActiveStudentsTestDB(
+        db_name=env_settings.MAIN_DB_USERS_NAME
+    ).get_test_sessions_for_student(
+        user_id=user_id,
+        session_id=session_id
+    )
+    return tuple(user_active_test_session)
 
 
 async def delete_old_test_session(*, ast_id: int) -> None:
