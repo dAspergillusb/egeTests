@@ -1,4 +1,5 @@
 from collections import defaultdict
+from pathlib import Path
 from typing import Annotated
 import traceback
 from fastapi import APIRouter, FastAPI, Request, Form, status, HTTPException
@@ -18,6 +19,7 @@ ROUTER: APIRouter = APIRouter(prefix="/pages", tags=["Frontend"])
 TEMPLATES: Jinja2Templates = Jinja2Templates(directory="modules/endpoints/templates")
 
 def register_main_endpoints(app: FastAPI) -> None:
+    Path("files").mkdir(parents=True, exist_ok=True)
     app.mount("/static", StaticFiles(directory="modules/endpoints/static"), "static")
     app.mount("/files", StaticFiles(directory="files"), name="files")
 
@@ -85,8 +87,6 @@ def register_main_endpoints(app: FastAPI) -> None:
                 "name": f"{user.firstname} {user.lastname}"
             })
         _response: RedirectResponse = if_user_mistake[True]
-        # request.session["name"] = f"{user.firstname} {user.lastname}"
-        # request.session["school_class"] = user.school_class
         _response.set_cookie(
             key="user_id",
             value=str(user.user_id),
@@ -94,8 +94,6 @@ def register_main_endpoints(app: FastAPI) -> None:
             secure=SECURED,
             samesite="lax"
         )
-        # request.session["user_id"] = user.user_id
-        # request.session["rank"] = user.rank
         _response.set_cookie(
             key="rank",
             value=user.rank,
@@ -121,11 +119,7 @@ def register_main_endpoints(app: FastAPI) -> None:
 
     @app.get("/logout")
     async def logout(request: Request) -> RedirectResponse:
-        # user_id: int = int(request.cookies.get("user_id", 0))
         session_id: str = request.cookies.get("session_id", "")
-        # active_session: type[UserSessions] | None = None
-        # if user_id:
-        #     active_session =  await UserSessionsDB().get_session(user_id=user_id)
         if session_id:
             await UserSessionsDB(db_name=env_settings.MAIN_DB_USERS_NAME).delete_session(session_id=session_id)
         redirect = RedirectResponse("/")
