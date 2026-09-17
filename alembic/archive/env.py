@@ -1,4 +1,4 @@
-from alembic.common import run_migrations
+from migration_utils import run_migrations
 from modules.endpoints.config import DB_URL_PART, env_settings
 from modules.databases.MainDB import BASE_ARCHIVE
 import modules.databases.ArchiveDatabasesDB  # noqa: F401
