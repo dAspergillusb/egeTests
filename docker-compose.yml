@@ -1,0 +1,77 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      MAIN_DB_USERS_NAME: ${MAIN_DB_USERS_NAME:-users_main}
+      MAIN_DB_INFORMATICS_NAME: ${MAIN_DB_INFORMATICS_NAME:-informatics_main}
+      MAIN_DB_ARCHIVE_NAME: ${MAIN_DB_ARCHIVE_NAME:-archive_databases}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-databases.sh:/docker-entrypoint-initdb.d/10-init-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrations:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      INITIATED_DBS: "True"
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+      MAIN_DB_USERS_NAME: ${MAIN_DB_USERS_NAME:-users_main}
+      MAIN_DB_INFORMATICS_NAME: ${MAIN_DB_INFORMATICS_NAME:-informatics_main}
+      MAIN_DB_ARCHIVE_NAME: ${MAIN_DB_ARCHIVE_NAME:-archive_databases}
+      ARCHIVE_DB_NAME: ${ARCHIVE_DB_NAME:-archive_databases}
+      INFORMATICS_DB_NAME: ${INFORMATICS_DB_NAME:-informatics_main}
+      USERS_DB_NAME: ${USERS_DB_NAME:-users}
+      USERS_STATISTICS_DB_NAME: ${USERS_STATISTICS_DB_NAME:-users_statistics}
+      DAILY_STATISTICS_DB_NAME: ${DAILY_STATISTICS_DB_NAME:-daily_statistics}
+      ACTIVE_STUDENTS_TEST_DB_NAME: ${ACTIVE_STUDENTS_TEST_DB_NAME:-active_students_test}
+      USERS_SESSIONS_DB_NAME: ${USERS_SESSIONS_DB_NAME:-users_sessions}
+    command: >
+      sh -c "alembic -c alembic-users.ini upgrade head &&
+             alembic -c alembic-informatics.ini upgrade head &&
+             alembic -c alembic-archive.ini upgrade head"
+    restart: "no"
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    environment:
+      INITIATED_DBS: "True"
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      MAIN_DB_USERS_NAME: ${MAIN_DB_USERS_NAME:-users_main}
+      MAIN_DB_INFORMATICS_NAME: ${MAIN_DB_INFORMATICS_NAME:-informatics_main}
+      MAIN_DB_ARCHIVE_NAME: ${MAIN_DB_ARCHIVE_NAME:-archive_databases}
+      ARCHIVE_DB_NAME: ${ARCHIVE_DB_NAME:-archive_databases}
+      INFORMATICS_DB_NAME: ${INFORMATICS_DB_NAME:-informatics_main}
+      USERS_DB_NAME: ${USERS_DB_NAME:-users}
+      USERS_STATISTICS_DB_NAME: ${USERS_STATISTICS_DB_NAME:-users_statistics}
+      DAILY_STATISTICS_DB_NAME: ${DAILY_STATISTICS_DB_NAME:-daily_statistics}
+      ACTIVE_STUDENTS_TEST_DB_NAME: ${ACTIVE_STUDENTS_TEST_DB_NAME:-active_students_test}
+      USERS_SESSIONS_DB_NAME: ${USERS_SESSIONS_DB_NAME:-users_sessions}
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
