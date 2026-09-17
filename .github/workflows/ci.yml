@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  INITIATED_DBS: "True"
+  DB_HOST: localhost
+  DB_PORT: "5432"
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  SECRET_KEY: ci-only-secret-key-0123456789abcdef0123456789abcdef
+  ALGORITHM: HS256
+  ACCESS_TOKEN_EXPIRE_MINUTES: "1440"
+  MAIN_DB_USERS_NAME: users_main
+  MAIN_DB_INFORMATICS_NAME: informatics_main
+  MAIN_DB_ARCHIVE_NAME: archive_databases
+  ARCHIVE_DB_NAME: archive_databases
+  INFORMATICS_DB_NAME: informatics_main
+  USERS_DB_NAME: users
+  USERS_STATISTICS_DB_NAME: users_statistics
+  DAILY_STATISTICS_DB_NAME: daily_statistics
+  ACTIVE_STUDENTS_TEST_DB_NAME: active_students_test
+  USERS_SESSIONS_DB_NAME: users_sessions
+
+jobs:
+  application-checks:
+    name: Application checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile Python sources
+        run: python -m compileall -q .
+
+      - name: Import FastAPI application
+        run: |
+          python - <<'PY'
+          from main import MAIN
+
+          assert MAIN is not None
+          assert MAIN.__class__.__name__ == "FastAPI"
+          print("FastAPI application imported successfully")
+          PY
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
+
+      - name: Build application image
+        run: docker build -t egetests-ci .
+
+  migrations:
+    name: PostgreSQL + Alembic migrations
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create application databases
+        run: |
+          python - <<'PY'
+          import asyncio
+          import asyncpg
+
+          DATABASES = (
+              "users_main",
+              "informatics_main",
+              "archive_databases",
+          )
+
+          async def create_databases() -> None:
+              connection = await asyncpg.connect(
+                  host="localhost",
+                  port=5432,
+                  user="postgres",
+                  password="postgres",
+                  database="postgres",
+              )
+              try:
+                  for database_name in DATABASES:
+                      exists = await connection.fetchval(
+                          "SELECT 1 FROM pg_database WHERE datname = $1",
+                          database_name,
+                      )
+                      if not exists:
+                          await connection.execute(
+                              f'CREATE DATABASE "{database_name}"'
+                          )
+                          print(f"Created {database_name}")
+              finally:
+                  await connection.close()
+
+          asyncio.run(create_databases())
+          PY
+
+      - name: Run users migrations
+        run: alembic -c alembic-users.ini upgrade head
+
+      - name: Run informatics migrations
+        run: alembic -c alembic-informatics.ini upgrade head
+
+      - name: Run archive migrations
+        run: alembic -c alembic-archive.ini upgrade head
+
+      - name: Verify migration heads
+        run: |
+          alembic -c alembic-users.ini current
+          alembic -c alembic-informatics.ini current
+          alembic -c alembic-archive.ini current
