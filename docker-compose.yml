@@ -70,8 +70,25 @@ services:
       DAILY_STATISTICS_DB_NAME: ${DAILY_STATISTICS_DB_NAME:-daily_statistics}
       ACTIVE_STUDENTS_TEST_DB_NAME: ${ACTIVE_STUDENTS_TEST_DB_NAME:-active_students_test}
       USERS_SESSIONS_DB_NAME: ${USERS_SESSIONS_DB_NAME:-users_sessions}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.usr('http://localhost:8000/health')")
+      interval: 30s
+      timeout: 5s
+      retries: 3
     ports:
       - "8000:8000"
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/${NGINX_CONFIG}:/etc/nginx/nginx.conf:ro
 
 volumes:
   postgres_data:
