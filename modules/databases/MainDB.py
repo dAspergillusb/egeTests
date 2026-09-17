@@ -1,7 +1,6 @@
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import text
 from asyncpg import connect, DuplicateDatabaseError, ObjectInUseError
-from ..endpoints.config import DB_USER, DB_PASSWORD
+from ..endpoints.config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD
 from ..errors.db_errors import NotMainDBNameError
 
 BASE_USERS = declarative_base()
@@ -18,26 +17,26 @@ class MainDB:
 
     async def create_main_db(self):
         connection = await connect(
-            host="localhost",
+            host=DB_HOST,
+            port=int(DB_PORT),
             user=DB_USER,
             password=DB_PASSWORD,
             database="postgres"
         )
         try:
-            await connection.execute(f"CREATE DATABASE {self.db_name}")
+            await connection.execute(f'CREATE DATABASE "{self.db_name}"')
             print(f"Database {self.db_name} successfully created")
         except DuplicateDatabaseError:
-            await connection.execute(f"DROP DATABASE {self.db_name}")
-            await connection.execute(f"CREATE DATABASE {self.db_name}")
-            print(f"Database {self.db_name} successfully REcreated")
+            print(f"Database {self.db_name} already exists; keeping existing data")
         except ObjectInUseError:
-            print(f"Database {self.db_name} is already in use! You need first close all other connections.")
-
-        await connection.close()
+            print(f"Database {self.db_name} is already in use")
+        finally:
+            await connection.close()
 
     async def close_connections_to_main_db(self):
         connection = await connect(
-            host="localhost",
+            host=DB_HOST,
+            port=int(DB_PORT),
             user=DB_USER,
             password=DB_PASSWORD,
             database="postgres"
@@ -53,4 +52,5 @@ class MainDB:
             print(f"Connections to database {self.db_name} successfully closed")
         except ObjectInUseError:
             print(f"Connection to database {self.db_name} was already closed")
-
+        finally:
+            await connection.close()
