@@ -18,12 +18,11 @@ class EnvSettings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: str = "5432"
     DB_USER: str = "postgres"
-    DB_PASSWORD: str = Field(min_length=1)
+    DB_PASSWORD: str = Field(min_length=1, repr=False)
 
-    SECRET_KEY: str = Field(min_length=32)
+    SECRET_KEY: str = Field(min_length=32, repr=False)
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: str = "1440"
-    SECURED: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",
