@@ -1,35 +1,40 @@
 # Student Assessment Platform
 
-A web-based assessment platform for computer science students, built with **FastAPI**, **SQLAlchemy**, **PostgreSQL**, and **JavaScript**.
+A full-cycle web application for computer science assessments, built with **Python, FastAPI, SQLAlchemy, PostgreSQL, asyncpg, and JavaScript**.
 
-The project covers the full assessment workflow: authentication, role-based access, test sessions, question management, result processing, statistics, and administration.
+The platform covers authentication, role-based access, question management, timed assessment sessions, answer processing, student statistics, and administration. The repository also includes **Docker Compose deployment, Alembic database migrations, environment-based secret management, and GitHub Actions CI**.
 
 ## Highlights
 
-- asynchronous Python backend built with FastAPI
-- PostgreSQL persistence with SQLAlchemy and `asyncpg`
+- asynchronous FastAPI backend
+- PostgreSQL persistence through SQLAlchemy and `asyncpg`
+- JWT authentication with HTTP-only cookies
+- server-side user session tracking
 - role-based access for students, teachers, and administrators
-- JWT-based authentication with server-side session tracking
-- student testing workflows and timed test sessions
-- automated answer checking and result processing
-- student performance statistics and analytics
-- teacher tools for question and assessment management
-- administrator tools for user and database management
-- server-rendered HTML with JavaScript-enhanced interfaces
+- timed test sessions and active assessment state
+- automated answer processing and statistics
+- question and assessment management tools
+- Dockerized application and PostgreSQL environment
+- Alembic migrations for all application databases
+- GitHub Actions checks for Python, Docker, PostgreSQL, and migrations
+- required runtime secrets instead of insecure application defaults
 
 ## Tech Stack
 
 ### Backend
 
-- Python
+- Python 3.12
 - FastAPI
 - SQLAlchemy
 - asyncpg
+- Pydantic Settings
 - aiofiles
 
-### Database
+### Database & Migrations
 
-- PostgreSQL
+- PostgreSQL 16
+- Alembic
+- three independent migration histories
 
 ### Authentication & Security
 
@@ -37,7 +42,14 @@ The project covers the full assessment workflow: authentication, role-based acce
 - Passlib
 - HTTP-only cookies
 - role-based authorization
-- server-side user sessions
+- server-side sessions
+- environment-based `SECRET_KEY` and database credentials
+
+### Infrastructure
+
+- Docker
+- Docker Compose
+- GitHub Actions
 
 ### Frontend
 
@@ -47,7 +59,7 @@ The project covers the full assessment workflow: authentication, role-based acce
 
 ## Architecture
 
-The application is split into dedicated modules for endpoints, database access, business logic, models, and shared types.
+The application is organized around endpoints, database access, domain logic, models, and shared types.
 
 ```text
 .
@@ -61,11 +73,22 @@ The application is split into dedicated modules for endpoints, database access, 
 │   ├── errors/
 │   ├── functions/
 │   └── models/
-├── requirements.txt
-└── database.csv
+├── alembic/
+│   ├── users/
+│   ├── informatics/
+│   └── archive/
+├── docker/
+├── docs/
+├── .github/workflows/
+├── Dockerfile
+├── docker-compose.yml
+├── alembic-users.ini
+├── alembic-informatics.ini
+├── alembic-archive.ini
+└── requirements.txt
 ```
 
-### Main application flow
+### Application flow
 
 ```text
 Browser / JavaScript UI
@@ -73,7 +96,8 @@ Browser / JavaScript UI
         ▼
      FastAPI
         │
-        ├── authentication & roles
+        ├── authentication & sessions
+        ├── role authorization
         ├── assessment workflows
         ├── statistics
         └── administration
@@ -93,62 +117,119 @@ The application implements separate access levels for:
 - **Teacher** — works with questions, tests, and student statistics
 - **Administrator** — manages users and database-related operations
 
-Authorization is enforced in backend dependencies rather than only in the UI.
+Authorization is enforced in backend dependencies rather than only in the interface.
 
 ## Assessment Workflow
 
 The platform supports:
 
-- starting and tracking active test sessions
-- loading assessment variants and individual tasks
+- generating and starting assessment sessions
+- tracking active test sessions
+- timed tests
+- loading individual tasks
 - saving answers during a session
-- checking answers
-- processing test results
-- storing user statistics
-- calculating accuracy and performance metrics
+- checking and processing answers
+- storing test history
 - collecting daily statistics
+- tracking performance across computer science problem categories
 
-The system contains assessment logic for computer science exam topics and can track performance across multiple problem categories.
-
-## Authentication
+## Authentication & Sessions
 
 Authentication uses JWT access tokens stored in HTTP-only cookies together with server-side session records.
 
-Protected routes validate both the authenticated user and the required application role before granting access.
+Protected routes validate authentication and required roles before granting access. Session records include information used to distinguish and manage active user sessions.
 
-## Database Layer
+## PostgreSQL Architecture
 
-The project uses multiple database-oriented modules for:
+The project uses three PostgreSQL databases:
 
-- users
-- user sessions
-- active student tests
-- student statistics
-- daily statistics
-- informatics questions and assessment data
-- database history / archive operations
+- `users_main` — users, sessions, active tests, and statistics
+- `informatics_main` — computer science questions and assessment data
+- `archive_databases` — database structure/history information
 
-Database operations are designed around asynchronous PostgreSQL access.
+The codebase uses separate SQLAlchemy metadata objects for these domains, so each database has its own Alembic migration history.
 
-## Local Setup
+## Alembic Migrations
 
-### Requirements
+Run all current migrations:
 
-- Python 3.10+
+```bash
+alembic -c alembic-users.ini upgrade head
+alembic -c alembic-informatics.ini upgrade head
+alembic -c alembic-archive.ini upgrade head
+```
+
+Create a new migration for the database whose models changed, for example:
+
+```bash
+alembic -c alembic-users.ini revision --autogenerate -m "add user field"
+```
+
+Equivalent configuration files are provided for the informatics and archive databases.
+
+Autogenerated migrations should always be reviewed before they are applied.
+
+## Configuration & Secrets
+
+Copy the example configuration:
+
+```bash
+cp .env.example .env
+```
+
+At minimum, provide your own PostgreSQL password and application secret:
+
+```env
+DB_PASSWORD=your-secure-database-password
+SECRET_KEY=replace-with-a-random-secret-at-least-32-characters-long
+```
+
+`DB_PASSWORD` and `SECRET_KEY` are required settings; the application does not provide insecure fallback values for them.
+
+The `.env` file is excluded from Git. `.env.example` contains only configuration placeholders and non-sensitive defaults.
+
+## Run with Docker Compose
+
+Docker Compose is the recommended way to start a clean local environment.
+
+```bash
+cp .env.example .env
+# set DB_PASSWORD and SECRET_KEY in .env
+
+docker compose up --build
+```
+
+The stack contains three services:
+
+- `db` — PostgreSQL 16
+- `migrations` — applies all three Alembic migration histories
+- `app` — starts FastAPI only after migrations complete successfully
+
+On first PostgreSQL initialization, `docker/init-databases.sh` creates the three application databases.
+
+The application is then available at:
+
+```text
+http://localhost:8000
+```
+
+Docker startup uses Alembic as the schema-management path instead of the legacy `create_all()` initialization flow.
+
+## Run Locally without Docker
+
+Requirements:
+
+- Python 3.12 recommended
 - PostgreSQL
 
-Clone the repository:
+Clone the repository and create a virtual environment:
 
 ```bash
 git clone https://github.com/dAspergillusb/egeTests.git
 cd egeTests
-```
-
-Create and activate a virtual environment:
-
-```bash
 python -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 On Windows:
@@ -157,35 +238,53 @@ On Windows:
 .venv\Scripts\activate
 ```
 
-Install dependencies:
+Create `.env`, configure PostgreSQL, create the three databases, and apply the Alembic migrations. When using Alembic-managed schema initialization, set:
 
-```bash
-pip install -r requirements.txt
+```env
+INITIATED_DBS=True
 ```
 
-The application reads PostgreSQL and authentication settings from `.env`. If `.env` is not present, the current configuration code can generate an initial configuration interactively.
-
-Start the application with an ASGI server, for example:
+Then start the application:
 
 ```bash
 uvicorn main:MAIN --reload
 ```
 
-## Configuration
+## Docker & Deployment Details
 
-The application supports configuration for:
+Additional deployment and migration documentation is available in:
 
-- PostgreSQL host and port
-- database user and password
-- application database names
-- JWT secret key and algorithm
-- access-token lifetime
+```text
+docs/deployment.md
+```
 
-The `.env` file is excluded from Git and should be used for local or deployment-specific secrets.
+## Continuous Integration
+
+GitHub Actions runs validation on pull requests and pushes to `master`.
+
+The CI workflow checks:
+
+- dependency installation on Python 3.12
+- Python source compilation
+- FastAPI application import
+- Docker Compose configuration
+- Docker image build
+- PostgreSQL 16 startup
+- creation of all three application databases
+- all three Alembic migration histories through `upgrade head`
+- current migration revisions after migration
+
+CI uses temporary test-only credentials; production secrets are not stored in the workflow.
+
+## Database Initialization Note
+
+The repository still contains legacy initialization code used by earlier project versions. The Docker workflow intentionally disables that path and uses Alembic migrations instead.
+
+Fresh Docker deployments also do **not** automatically seed the public demo credentials from `database.csv`. Initial users should be created explicitly rather than relying on weak default accounts.
 
 ## Project Context
 
-This project was developed as a practical educational platform for computer science assessment. It represents an end-to-end development effort covering backend architecture, database design, authentication, application logic, frontend integration, testing workflows, and deployment-oriented configuration.
+This project is an end-to-end educational assessment platform and demonstrates work across backend architecture, asynchronous database access, authentication, application logic, frontend integration, schema migrations, containerized deployment, and CI infrastructure.
 
 ## Author
 
