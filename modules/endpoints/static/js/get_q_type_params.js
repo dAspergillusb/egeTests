@@ -1,5 +1,5 @@
 const oneAnsQ = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '22', '23', '24'];
-const oneAnsQFiles = ['3', '9', '10', '22', '24'];
+const oneAnsQFiles = ['3', '9', '10', '22', '23', '24'];
 const twoAnsQFiles = ['17', '18', '26'];
 const manyAnsQ = '25';
 const manyAnsQFiles = '27';

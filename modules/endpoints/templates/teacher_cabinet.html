@@ -358,6 +358,7 @@
           } else {
               formData.set('q_text', window.editorInstance.getData());
           }
+          formData.set('q_number', buttonSave.dataset.id);
           try {
               const response = await fetch(`/questions/${qId}`, {
                   method: 'post',

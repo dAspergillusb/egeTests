@@ -82,7 +82,7 @@ function getStandardQuestions(questionsList, toCreate = true) {
         if (toCreate) {
             container.appendChild(contentDiv);
 
-            let buttonsGroup = createActionButtons(question.q_id);
+            let buttonsGroup = createActionButtons(question.q_id, question.q_number);
             container.appendChild(buttonsGroup);
 
             // let separator = document.createElement('hr');
@@ -158,7 +158,7 @@ function getSpecialQuestions(questionsList, toCreate = true) {
         });
         if (toCreate) {
             container.appendChild(questionBlock);
-            let buttonGroup = createActionButtons(questionsList[i + 2].q_id);
+            let buttonGroup = createActionButtons(questionsList[i + 2].q_id, questionsList[i + 2].q_number);
             container.appendChild(buttonGroup);
             container.appendChild(createSeparator(questionsList[i + 2].q_id));
         }
@@ -166,7 +166,7 @@ function getSpecialQuestions(questionsList, toCreate = true) {
     }
 }
 
-function createActionButtons(q_id) {
+function createActionButtons(q_id, q_num) {
     let buttonsNames = ['Сохранить', 'Отменить', 'Удалить', 'Изменить'];
     let buttonsNameAttr = ['save', 'cancel', 'remove', 'edit'];
     let buttonsEnabled = [true, true, false, false]
@@ -186,6 +186,7 @@ function createActionButtons(q_id) {
         button.innerHTML = buttonText;
         button.disabled = buttonsEnabled[index];
         button.setAttribute('id', buttonsIdNames[index]);
+        button.dataset.id = q_num;
         button.setAttribute('name', buttonsNameAttr[index]);
         button.setAttribute('class', 'btn btn-outline-primary');
         button.setAttribute('type', 'button');
