@@ -10,6 +10,7 @@ from modules import (
     register_admin_pages,
 )
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from modules import (
     INITIATED_DBS,
@@ -30,6 +31,14 @@ from modules import (
 )
 
 MAIN: FastAPI = FastAPI()
+
+class HTTPSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        if request.headers.get("x-forwarded-proto") != "https":
+            request.scope["schema"] = "https"
+        response = await call_next(request)
+        return response
+
 
 async def init_dbs() -> None:
     await MainDB(db_name=env_settings.MAIN_DB_USERS_NAME).create_main_db()
@@ -92,6 +101,8 @@ MAIN.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+MAIN.add_middleware(HTTPSMiddleware)
 
 register_admin_pages(app=MAIN)
 register_main_endpoints(app=MAIN)
