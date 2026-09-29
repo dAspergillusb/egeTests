@@ -34,8 +34,8 @@ MAIN: FastAPI = FastAPI()
 
 class HTTPSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
-        if request.headers.get("x-forwarded-proto") != "https":
-            request.scope["schema"] = "https"
+        if request.headers.get("x-forwarded-proto") == "https":
+            request.scope["scheme"] = "https"
         response = await call_next(request)
         return response
 
