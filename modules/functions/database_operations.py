@@ -488,7 +488,7 @@ async def clear_or_create_database_informatics(**kwargs) -> int:
     except ObjectInUseError:
         db_name: str = env_settings.MAIN_DB_INFORMATICS_NAME
         await MainDB(db_name=db_name).close_connections_to_main_db()
-        await MainDB(db_name=db_name).create_main_db()
+        await MainDB(db_name=db_name).create_main_db(clear=True)
     await InformaticsDB(db_name=env_settings.MAIN_DB_INFORMATICS_NAME).init_db()
     return status.HTTP_204_NO_CONTENT
 
