@@ -23,6 +23,10 @@ def register_main_endpoints(app: FastAPI) -> None:
     app.mount("/static", StaticFiles(directory="modules/endpoints/static"), "static")
     app.mount("/files", StaticFiles(directory="files"), name="files")
 
+    @app.get("/health")
+    async def health(request: Request):
+        return {"status": "ok"}
+
     @app.get(path="/", response_model=None)
     def main_page(request: Request) -> _TemplateResponse | RedirectResponse:
         if request.session.get("rank"):
