@@ -15,7 +15,7 @@ class MainDB:
             raise NotMainDBNameError()
         self.db_name = db_name
 
-    async def create_main_db(self):
+    async def create_main_db(self, clear: bool = False):
         connection = await connect(
             host=DB_HOST,
             port=int(DB_PORT),
@@ -27,7 +27,11 @@ class MainDB:
             await connection.execute(f'CREATE DATABASE "{self.db_name}"')
             print(f"Database {self.db_name} successfully created")
         except DuplicateDatabaseError:
-            print(f"Database {self.db_name} already exists; keeping existing data")
+            if clear:
+                await connection.execute(f'DROP DATABASE "{self.db_name}"')
+                print(f"Database {self.db_name} successfully dropped")
+            else:
+                print(f"Database {self.db_name} already exists; keeping existing data")
         except ObjectInUseError:
             print(f"Database {self.db_name} is already in use")
         finally:
